@@ -1,0 +1,19 @@
+{
+  "name": "bench-marking-defense",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "src/cli.js",
+  "scripts": {
+    "setup": "node src/cli.js setup",
+    "smoke": "node src/cli.js smoke",
+    "benchmark": "node src/cli.js benchmark",
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "spotlighting-datamarking": "^2.0.0-alpha"
+  }
+}

@@ -1,0 +1,121 @@
+import { createReadStream, existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createInterface } from 'node:readline';
+
+export const REQUIRED_DATASET_FILES = [
+  'raw_submissions_phase1.jsonl',
+  'raw_submissions_phase2.jsonl',
+  'scenarios.json',
+  'system_prompt.json',
+  'levels_descriptions.json',
+];
+
+export const PHASE1_SPOTLIGHT_LEVELS = new Set([
+  'level1e',
+  'level1f',
+  'level2e',
+  'level2f',
+  'level3e',
+  'level3f',
+  'level4e',
+  'level4f',
+]);
+
+export function validateDatasetFiles(dataDir) {
+  const missing = REQUIRED_DATASET_FILES.filter((file) => !existsSync(join(dataDir, file)));
+  if (missing.length > 0) {
+    throw new Error(`Missing dataset files in ${dataDir}: ${missing.join(', ')}`);
+  }
+}
+
+export function readJson(dataDir, fileName) {
+  return JSON.parse(readFileSync(join(dataDir, fileName), 'utf8'));
+}
+
+export function rawSubmissionPath(dataDir, phase) {
+  return join(dataDir, `raw_submissions_${phase}.jsonl`);
+}
+
+export function scenarioNumberFromLevel(level) {
+  const match = /^level([1-4])([a-z])$/i.exec(level);
+  if (!match) throw new Error(`Invalid level name "${level}".`);
+  return Number.parseInt(match[1], 10);
+}
+
+export function isSpotlightLevel(level, phase, levelsDescriptions) {
+  if (phase === 'phase1' && PHASE1_SPOTLIGHT_LEVELS.has(level)) return true;
+
+  const match = /^level[1-4]([a-z])$/i.exec(level);
+  if (!match) return false;
+
+  const phaseDescriptions = levelsDescriptions[phase] || {};
+  const description = phaseDescriptions[match[1]] || '';
+  return String(description).toLowerCase().includes('spotlight');
+}
+
+export function normalizeSubmission(raw) {
+  let objectives = raw.objectives;
+  if (typeof objectives === 'string') {
+    try {
+      objectives = JSON.parse(objectives);
+    } catch {
+      objectives = {};
+    }
+  }
+
+  return {
+    rowKey: raw.RowKey,
+    timestamp: raw.Timestamp,
+    jobId: raw.job_id,
+    teamId: raw.team_id,
+    scenario: raw.scenario,
+    subject: raw.subject || '',
+    body: raw.body || '',
+    objectives: objectives || {},
+    output: raw.output || '',
+    scheduledTime: raw.scheduled_time,
+    startedTime: raw.started_time,
+    completedTime: raw.completed_time,
+  };
+}
+
+/**
+ * @param {{
+ *   dataDir: string;
+ *   phase: string;
+ *   levelsDescriptions: Record<string, Record<string, string>>;
+ *   level?: string;
+ *   scenario?: string;
+ *   spotlightOnly?: boolean;
+ *   limit?: number;
+ * }} options
+ */
+export async function loadSubmissions(options) {
+  const {
+    dataDir,
+    phase,
+    levelsDescriptions,
+    level,
+    scenario,
+    spotlightOnly = true,
+    limit = 1,
+  } = options;
+  const filePath = rawSubmissionPath(dataDir, phase);
+  const input = createReadStream(filePath, { encoding: 'utf8' });
+  const lines = createInterface({ input, crlfDelay: Number.POSITIVE_INFINITY });
+  const rows = [];
+
+  for await (const line of lines) {
+    if (!line.trim()) continue;
+    const row = normalizeSubmission(JSON.parse(line));
+
+    if (level && row.scenario !== level) continue;
+    if (scenario && `scenario_${scenarioNumberFromLevel(row.scenario)}` !== scenario) continue;
+    if (spotlightOnly && !isSpotlightLevel(row.scenario, phase, levelsDescriptions)) continue;
+
+    rows.push(row);
+    if (rows.length >= limit) break;
+  }
+
+  return rows;
+}
