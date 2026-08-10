@@ -13,7 +13,8 @@ Options:
   --level <level1e>
   --scenario <scenario_1>
   --limit <n>
-  --all-levels`);
+  --trace
+  --microsoft-spotlight-levels`);
 }
 
 function buildRunOptions(args, defaultLimit) {
@@ -22,7 +23,8 @@ function buildRunOptions(args, defaultLimit) {
     level: typeof args.level === 'string' ? args.level : undefined,
     scenario: typeof args.scenario === 'string' ? args.scenario : undefined,
     limit: asPositiveInt(args.limit, defaultLimit),
-    spotlightOnly: args['all-levels'] !== true,
+    spotlightOnly: args['microsoft-spotlight-levels'] === true,
+    trace: args.trace === true,
   };
 }
 

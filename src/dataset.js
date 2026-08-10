@@ -5,9 +5,7 @@ import { createInterface } from 'node:readline';
 export const REQUIRED_DATASET_FILES = [
   'raw_submissions_phase1.jsonl',
   'raw_submissions_phase2.jsonl',
-  'scenarios.json',
   'system_prompt.json',
-  'levels_descriptions.json',
 ];
 
 export const PHASE1_SPOTLIGHT_LEVELS = new Set([
@@ -83,7 +81,7 @@ export function normalizeSubmission(raw) {
  * @param {{
  *   dataDir: string;
  *   phase: string;
- *   levelsDescriptions: Record<string, Record<string, string>>;
+ *   levelsDescriptions?: Record<string, Record<string, string>>;
  *   level?: string;
  *   scenario?: string;
  *   spotlightOnly?: boolean;
@@ -94,10 +92,10 @@ export async function loadSubmissions(options) {
   const {
     dataDir,
     phase,
-    levelsDescriptions,
+    levelsDescriptions = {},
     level,
     scenario,
-    spotlightOnly = true,
+    spotlightOnly = false,
     limit = 1,
   } = options;
   const filePath = rawSubmissionPath(dataDir, phase);
