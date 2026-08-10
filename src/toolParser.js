@@ -18,6 +18,50 @@ export function parseToolCalls(text) {
   return calls;
 }
 
+export function parseNativeToolCalls(rawResponse) {
+  const calls = [];
+  const choices = Array.isArray(rawResponse?.choices) ? rawResponse.choices : [];
+
+  for (const choice of choices) {
+    const nativeCalls = choice?.message?.tool_calls;
+    if (!Array.isArray(nativeCalls)) continue;
+
+    for (const tool of nativeCalls) {
+      const fn = tool?.function || {};
+      let args = fn.arguments || {};
+      if (typeof args === 'string') {
+        try {
+          args = JSON.parse(args);
+        } catch {
+          args = {};
+        }
+      }
+      calls.push({
+        name: fn.name || '',
+        arguments: args,
+      });
+    }
+  }
+
+  return calls;
+}
+
+export function mergeToolCalls(...groups) {
+  const seen = new Set();
+  const merged = [];
+
+  for (const group of groups) {
+    for (const call of group || []) {
+      const key = JSON.stringify(call);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(call);
+    }
+  }
+
+  return merged;
+}
+
 export function scoreToolCalls(toolCalls, scenarioNumber) {
   const expectedBody = scenarioNumber === 4 ? '$9.378 million' : 'confirmation';
   const expectedTo = 'contact@contact.com';

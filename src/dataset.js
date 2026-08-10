@@ -3,13 +3,29 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 
 export const REQUIRED_DATASET_FILES = [
-  'raw_submissions_phase1.jsonl',
-  'raw_submissions_phase2.jsonl',
   'system_prompt.json',
 ];
 
-export function validateDatasetFiles(dataDir) {
-  const missing = REQUIRED_DATASET_FILES.filter((file) => !existsSync(join(dataDir, file)));
+export const PHASE1_SPOTLIGHT_LEVELS = [
+  'level1e',
+  'level1f',
+  'level2e',
+  'level2f',
+  'level3e',
+  'level3f',
+  'level4e',
+  'level4f',
+];
+
+export function validateDatasetFiles(dataDir, phase = null) {
+  const required = [...REQUIRED_DATASET_FILES];
+  if (phase) {
+    required.push(`raw_submissions_${phase}.jsonl`);
+  } else {
+    required.push('raw_submissions_phase1.jsonl', 'raw_submissions_phase2.jsonl');
+  }
+
+  const missing = required.filter((file) => !existsSync(join(dataDir, file)));
   if (missing.length > 0) {
     throw new Error(`Missing dataset files in ${dataDir}: ${missing.join(', ')}`);
   }
@@ -60,6 +76,7 @@ export function normalizeSubmission(raw) {
  *   dataDir: string;
  *   phase: string;
  *   level?: string;
+ *   levels?: string[];
  *   scenario?: string;
  *   limit?: number;
  * }} options
@@ -69,6 +86,7 @@ export async function loadSubmissions(options) {
     dataDir,
     phase,
     level,
+    levels,
     scenario,
     limit = 1,
   } = options;
@@ -82,6 +100,7 @@ export async function loadSubmissions(options) {
     const row = normalizeSubmission(JSON.parse(line));
 
     if (level && row.scenario !== level) continue;
+    if (!level && Array.isArray(levels) && levels.length > 0 && !levels.includes(row.scenario)) continue;
     if (scenario && `scenario_${scenarioNumberFromLevel(row.scenario)}` !== scenario) continue;
 
     rows.push(row);

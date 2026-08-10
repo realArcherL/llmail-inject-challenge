@@ -20,3 +20,15 @@ export function applySpotlighting({ systemPrompt, userQuery, emails }) {
     dataMarker: null,
   };
 }
+
+export function withoutSpotlighting({ systemPrompt, userQuery, emails }) {
+  const emailContext = formatEmailContext(emails);
+
+  return {
+    systemPrompt,
+    userQuery,
+    emailContext: `Emails:\n${emailContext}`,
+    spotlightMethod: 'none',
+    dataMarker: null,
+  };
+}

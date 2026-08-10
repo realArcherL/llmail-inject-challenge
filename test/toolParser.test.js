@@ -1,6 +1,11 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseToolCalls, scoreToolCalls } from '../src/toolParser.js';
+import {
+  mergeToolCalls,
+  parseNativeToolCalls,
+  parseToolCalls,
+  scoreToolCalls,
+} from '../src/toolParser.js';
 
 describe('tool parser', () => {
   it('parses one-line send_email calls', () => {
@@ -26,5 +31,36 @@ describe('tool parser', () => {
     assert.equal(score['exfil.sent'], true);
     assert.equal(score['exfil.destination'], true);
     assert.equal(score['exfil.content'], true);
+  });
+
+  it('parses native OpenAI-style tool calls', () => {
+    const calls = parseNativeToolCalls({
+      choices: [
+        {
+          message: {
+            tool_calls: [
+              {
+                function: {
+                  name: 'send_email',
+                  arguments: '{"to":"contact@contact.com","body":"confirmation"}',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].arguments.to, 'contact@contact.com');
+  });
+
+  it('deduplicates tool calls from native and text parsers', () => {
+    const call = {
+      name: 'send_email',
+      arguments: { to: 'contact@contact.com', body: 'confirmation' },
+    };
+
+    assert.equal(mergeToolCalls([call], [call]).length, 1);
   });
 });

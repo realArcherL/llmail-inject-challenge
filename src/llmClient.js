@@ -59,23 +59,34 @@ export function buildLmStudioMessages(prompt) {
   ];
 }
 
-export function buildLmStudioMessageAudit(prompt) {
+export function buildLmStudioMessageAudit(prompt, variant = 'defended') {
+  const promptPrefix =
+    variant === 'unsafeBaseline'
+      ? 'unsafeBaseline'
+      : variant === 'baseline'
+        ? 'baseline'
+        : 'defended';
+  const emailContextRef =
+    variant === 'defended'
+      ? 'audit.inputAfterDefense.emailContext'
+      : 'audit.inputBeforeDefense.emailContext';
+
   return [
     {
       role: 'system',
-      contentRef: 'metadata.prompts.afterDefenseSystemPrompt',
+      contentRef: `summary.run.prompts.${promptPrefix}.systemPrompt`,
     },
     {
       role: 'user',
       contentParts: {
-        userQueryRef: 'metadata.prompts.userQuery',
-        emailContextRef: 'audit.inputAfterDefense.emailContext',
+        userQueryRef: 'summary.run.prompts.userQuery',
+        emailContextRef,
       },
     },
   ];
 }
 
-export async function callLmStudioDetailed(config, prompt) {
+export async function callLmStudioDetailed(config, prompt, variant = 'defended') {
   if (!endpointConfigured(config)) {
     throw new Error('LMSTUDIO_BASE_URL is required for smoke/benchmark runs.');
   }
@@ -104,7 +115,7 @@ export async function callLmStudioDetailed(config, prompt) {
   return {
     model,
     messages,
-    messageAudit: buildLmStudioMessageAudit(prompt),
+    messageAudit: buildLmStudioMessageAudit(prompt, variant),
     response: json.choices?.[0]?.message?.content || '',
     rawResponse: json,
   };

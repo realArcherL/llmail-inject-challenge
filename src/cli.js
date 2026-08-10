@@ -6,6 +6,7 @@ function printUsage() {
   console.log(`Usage:
   npm run setup
   npm run smoke -- --phase phase1 --limit 1
+  npm run compare -- --phase phase1 --limit 100
   npm run benchmark -- --phase phase1 --limit 100
 
 Options:
@@ -13,7 +14,10 @@ Options:
   --level <level1e>
   --scenario <scenario_1>
   --limit <n>
-  --trace`);
+  --trace
+
+Default:
+  Phase 1 runs use Spotlight levels level1e/f through level4e/f unless --level is set.`);
 }
 
 function buildRunOptions(args, defaultLimit) {
@@ -53,10 +57,10 @@ async function main() {
     return;
   }
 
-  if (command === 'benchmark') {
+  if (command === 'benchmark' || command === 'compare') {
     const options = buildRunOptions(args, 100);
     const runOutput = await runRows(config, options);
-    const { dir, summary } = writeRunResults('benchmark', runOutput, options);
+    const { dir, summary } = writeRunResults(command, runOutput, options);
     console.log(JSON.stringify({ outputDir: dir, summary }, null, 2));
     return;
   }
