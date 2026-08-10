@@ -33,6 +33,8 @@ describe('run report summary', () => {
       },
     ]);
 
+    assert.equal(summary.run.command, 'benchmark');
+    assert.equal(summary.run.mode, 'dataset-replay');
     assert.equal(summary.overall.total, 2);
     assert.equal(summary.overall.exfilSent, 2);
     assert.equal(summary.overall.fullSuccess, 1);

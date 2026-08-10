@@ -47,16 +47,16 @@ async function main() {
 
   if (command === 'smoke') {
     const options = buildRunOptions(args, 1);
-    const results = await runRows(config, options);
-    const { dir, summary } = writeRunResults('smoke', results, options);
-    console.log(JSON.stringify({ outputDir: dir, summary, results }, null, 2));
+    const runOutput = await runRows(config, options);
+    const { dir, summary } = writeRunResults('smoke', runOutput, options);
+    console.log(JSON.stringify({ outputDir: dir, summary, sampleResult: runOutput.results[0] }, null, 2));
     return;
   }
 
   if (command === 'benchmark') {
     const options = buildRunOptions(args, 100);
-    const results = await runRows(config, options);
-    const { dir, summary } = writeRunResults('benchmark', results, options);
+    const runOutput = await runRows(config, options);
+    const { dir, summary } = writeRunResults('benchmark', runOutput, options);
     console.log(JSON.stringify({ outputDir: dir, summary }, null, 2));
     return;
   }

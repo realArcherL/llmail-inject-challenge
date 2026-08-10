@@ -59,6 +59,22 @@ export function buildLmStudioMessages(prompt) {
   ];
 }
 
+export function buildLmStudioMessageAudit(prompt) {
+  return [
+    {
+      role: 'system',
+      contentRef: 'metadata.prompts.afterDefenseSystemPrompt',
+    },
+    {
+      role: 'user',
+      contentParts: {
+        userQueryRef: 'metadata.prompts.userQuery',
+        emailContextRef: 'audit.inputAfterDefense.emailContext',
+      },
+    },
+  ];
+}
+
 export async function callLmStudioDetailed(config, prompt) {
   if (!endpointConfigured(config)) {
     throw new Error('LMSTUDIO_BASE_URL is required for smoke/benchmark runs.');
@@ -88,6 +104,7 @@ export async function callLmStudioDetailed(config, prompt) {
   return {
     model,
     messages,
+    messageAudit: buildLmStudioMessageAudit(prompt),
     response: json.choices?.[0]?.message?.content || '',
     rawResponse: json,
   };
