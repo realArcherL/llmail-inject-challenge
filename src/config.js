@@ -7,6 +7,8 @@ import { resolve } from 'node:path';
  *   lmstudioBaseUrl?: string;
  *   lmstudioModel?: string;
  *   lmstudioApiKey: string;
+ *   lmstudioTimeoutMs: number;
+ *   lmstudioMaxTokens: number;
  * }} AppConfig
  */
 
@@ -42,6 +44,8 @@ export function loadConfig() {
     lmstudioBaseUrl: process.env.LMSTUDIO_BASE_URL,
     lmstudioModel: process.env.LMSTUDIO_MODEL,
     lmstudioApiKey: process.env.LMSTUDIO_API_KEY || 'lm-studio',
+    lmstudioTimeoutMs: asPositiveInt(process.env.LMSTUDIO_TIMEOUT_MS, 120000),
+    lmstudioMaxTokens: asPositiveInt(process.env.LMSTUDIO_MAX_TOKENS, 1000),
   };
 }
 

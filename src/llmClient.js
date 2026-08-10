@@ -93,17 +93,29 @@ export async function callLmStudioDetailed(config, prompt, variant = 'defended')
 
   const model = await resolveLmStudioModel(config);
   const messages = buildLmStudioMessages(prompt);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), config.lmstudioTimeoutMs);
+
   const response = await fetch(`${trimTrailingSlash(config.lmstudioBaseUrl)}/chat/completions`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${config.lmstudioApiKey}`,
       'Content-Type': 'application/json',
     },
+    signal: controller.signal,
     body: JSON.stringify({
       model,
       temperature: 0,
+      max_tokens: config.lmstudioMaxTokens,
       messages,
     }),
+  }).catch((error) => {
+    if (error.name === 'AbortError') {
+      throw new Error(`LM Studio chat completion timed out after ${config.lmstudioTimeoutMs}ms.`);
+    }
+    throw error;
+  }).finally(() => {
+    clearTimeout(timeout);
   });
 
   if (!response.ok) {

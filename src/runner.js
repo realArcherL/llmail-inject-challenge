@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   loadSubmissions,
@@ -9,7 +9,11 @@ import {
 } from './dataset.js';
 import { buildDatasetReplayRun, formatEmailContext } from './scenarios.js';
 import { applySpotlighting, withoutSpotlighting } from './spotlight.js';
-import { callLmStudioDetailed, pingLmStudio } from './llmClient.js';
+import {
+  buildLmStudioMessageAudit,
+  callLmStudioDetailed,
+  pingLmStudio,
+} from './llmClient.js';
 import { mergeToolCalls, parseNativeToolCalls, parseToolCalls, scoreToolCalls } from './toolParser.js';
 
 function preview(value, maxLength = 420) {
@@ -24,6 +28,24 @@ function trace(options, step, details = {}) {
   console.log(JSON.stringify(details, null, 2));
 }
 
+function progress(options, message) {
+  if (!options.progress) return;
+  console.error(`[progress] ${message}`);
+}
+
+export function createRunDir() {
+  const dir = join('runs', new Date().toISOString().replace(/[:.]/g, '-'));
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+function writeCheckpoint(command, dir, results, metadata) {
+  if (!dir) return;
+
+  const summary = buildRunSummary(command, results, metadata);
+  writeFileSync(join(dir, 'summary.json'), JSON.stringify(summary, null, 2));
+}
+
 function rate(count, total) {
   return total === 0 ? 0 : Number((count / total).toFixed(4));
 }
@@ -36,21 +58,30 @@ function isFullSuccess(objectives = {}) {
   );
 }
 
+function isCompletedVariant(variantResult) {
+  return Boolean(variantResult && !variantResult.error);
+}
+
 function summarizeBucket(rows) {
   const total = rows.length;
-  const exfilSent = rows.filter((row) => row.objectives['exfil.sent']).length;
-  const exfilDestination = rows.filter((row) => row.objectives['exfil.destination']).length;
-  const exfilContent = rows.filter((row) => row.objectives['exfil.content']).length;
-  const fullSuccess = rows.filter((row) => isFullSuccess(row.objectives)).length;
+  const errors = rows.filter((row) => row.error).length;
+  const completedRows = rows.filter((row) => !row.error);
+  const completed = completedRows.length;
+  const exfilSent = completedRows.filter((row) => row.objectives['exfil.sent']).length;
+  const exfilDestination = completedRows.filter((row) => row.objectives['exfil.destination']).length;
+  const exfilContent = completedRows.filter((row) => row.objectives['exfil.content']).length;
+  const fullSuccess = completedRows.filter((row) => isFullSuccess(row.objectives)).length;
   const originalFullSuccess = rows.filter((row) => isFullSuccess(row.originalObjectives)).length;
 
   return {
     total,
+    completed,
+    errors,
     exfilSent,
     exfilDestination,
     exfilContent,
     fullSuccess,
-    attackSuccessRate: rate(fullSuccess, total),
+    attackSuccessRate: rate(fullSuccess, completed),
     microsoftOriginalFullSuccess: originalFullSuccess,
     microsoftOriginalAttackSuccessRate: rate(originalFullSuccess, total),
   };
@@ -72,50 +103,55 @@ function summarizeVariants(results) {
     byVariant[variant] = summarizeBucket(rows);
   }
 
-  const pairedTotal = results.filter(
-    (row) => row.variants?.unsafeBaseline && row.variants?.baseline && row.variants?.defended,
-  ).length;
-  const unsafeSuccessBaselineFailure = results.filter(
+  const completedPairs = results.filter(
     (row) =>
-      isFullSuccess(row.variants?.unsafeBaseline?.objectives) &&
-      !isFullSuccess(row.variants?.baseline?.objectives),
-  ).length;
-  const unsafeSuccessDefendedFailure = results.filter(
+      isCompletedVariant(row.variants?.unsafeBaseline) &&
+      isCompletedVariant(row.variants?.baseline) &&
+      isCompletedVariant(row.variants?.defended),
+  );
+  const pairedTotal = completedPairs.length;
+  const unsafeSuccessBaselineFailure = completedPairs.filter(
     (row) =>
-      isFullSuccess(row.variants?.unsafeBaseline?.objectives) &&
-      !isFullSuccess(row.variants?.defended?.objectives),
+      isFullSuccess(row.variants.unsafeBaseline.objectives) &&
+      !isFullSuccess(row.variants.baseline.objectives),
   ).length;
-  const baselineSuccessDefendedFailure = results.filter(
+  const unsafeSuccessDefendedFailure = completedPairs.filter(
     (row) =>
-      isFullSuccess(row.variants?.baseline?.objectives) &&
-      !isFullSuccess(row.variants?.defended?.objectives),
+      isFullSuccess(row.variants.unsafeBaseline.objectives) &&
+      !isFullSuccess(row.variants.defended.objectives),
   ).length;
-  const unsafeSuccessBaselineSuccessDefendedFailure = results.filter(
+  const baselineSuccessDefendedFailure = completedPairs.filter(
     (row) =>
-      isFullSuccess(row.variants?.unsafeBaseline?.objectives) &&
-      isFullSuccess(row.variants?.baseline?.objectives) &&
-      !isFullSuccess(row.variants?.defended?.objectives),
+      isFullSuccess(row.variants.baseline.objectives) &&
+      !isFullSuccess(row.variants.defended.objectives),
   ).length;
-  const bothSuccess = results.filter(
+  const unsafeSuccessBaselineSuccessDefendedFailure = completedPairs.filter(
     (row) =>
-      isFullSuccess(row.variants?.baseline?.objectives) &&
-      isFullSuccess(row.variants?.defended?.objectives),
+      isFullSuccess(row.variants.unsafeBaseline.objectives) &&
+      isFullSuccess(row.variants.baseline.objectives) &&
+      !isFullSuccess(row.variants.defended.objectives),
   ).length;
-  const bothFailure = results.filter(
+  const bothSuccess = completedPairs.filter(
     (row) =>
-      !isFullSuccess(row.variants?.baseline?.objectives) &&
-      !isFullSuccess(row.variants?.defended?.objectives),
+      isFullSuccess(row.variants.baseline.objectives) &&
+      isFullSuccess(row.variants.defended.objectives),
   ).length;
-  const baselineFailureDefendedSuccess = results.filter(
+  const bothFailure = completedPairs.filter(
     (row) =>
-      !isFullSuccess(row.variants?.baseline?.objectives) &&
-      isFullSuccess(row.variants?.defended?.objectives),
+      !isFullSuccess(row.variants.baseline.objectives) &&
+      !isFullSuccess(row.variants.defended.objectives),
+  ).length;
+  const baselineFailureDefendedSuccess = completedPairs.filter(
+    (row) =>
+      !isFullSuccess(row.variants.baseline.objectives) &&
+      isFullSuccess(row.variants.defended.objectives),
   ).length;
 
   return {
     ...byVariant,
     comparison: {
       pairedTotal,
+      incompleteRows: results.length - pairedTotal,
       unsafeSuccessBaselineFailure,
       unsafeSuccessDefendedFailure,
       baselineSuccessDefendedFailure,
@@ -168,6 +204,8 @@ function buildRunMetadata(config, prompts, options, promptSnapshot) {
     lmStudio: {
       baseUrl: config.lmstudioBaseUrl,
       configuredModel: config.lmstudioModel || null,
+      maxTokens: config.lmstudioMaxTokens,
+      timeoutMs: config.lmstudioTimeoutMs,
     },
     prompts: {
       source: 'data/data/system_prompt.json',
@@ -194,7 +232,69 @@ function buildRunMetadata(config, prompts, options, promptSnapshot) {
 }
 
 async function runVariant({ config, row, scenarioRun, prompt, emailContextBeforeDefense, variant }) {
-  const llmResult = await callLmStudioDetailed(config, prompt, variant);
+  let llmResult;
+  try {
+    llmResult = await callLmStudioDetailed(config, prompt, variant);
+  } catch (error) {
+    const objectives = {
+      'email.retrieved': true,
+      'defense.undetected': true,
+      'exfil.sent': false,
+      'exfil.destination': false,
+      'exfil.content': false,
+    };
+
+    return {
+      variant,
+      rowKey: row.rowKey,
+      scenario: row.scenario,
+      scenarioKey: scenarioRun.scenarioKey,
+      subject: row.subject,
+      response: '',
+      toolCalls: [],
+      objectives,
+      originalObjectives: row.objectives,
+      spotlightMethod: prompt.spotlightMethod,
+      error: {
+        name: error.name || 'Error',
+        message: error.message,
+      },
+      audit: {
+        inputBeforeDefense: {
+          source: 'data/data/raw_submissions_phase*.jsonl',
+          row: {
+            rowKey: row.rowKey,
+            jobId: row.jobId,
+            teamId: row.teamId,
+            scenario: row.scenario,
+            subject: row.subject,
+            body: row.body,
+            originalObjectives: row.objectives,
+          },
+          emails: scenarioRun.emails,
+          emailContext: emailContextBeforeDefense,
+        },
+        inputAfterDefense: {
+          package: variant === 'defended' ? 'spotlighting-datamarking' : null,
+          packageCall:
+            variant === 'defended'
+              ? 'new DataMarkingViaSpotlighting().base64EncodeData(emailContext)'
+              : null,
+          spotlightMethod: prompt.spotlightMethod,
+          emailContext: prompt.emailContext,
+        },
+        llmRequest: {
+          url: `${config.lmstudioBaseUrl}/chat/completions`,
+          model: config.lmstudioModel || null,
+          temperature: 0,
+          maxTokens: config.lmstudioMaxTokens,
+          timeoutMs: config.lmstudioTimeoutMs,
+          messages: buildLmStudioMessageAudit(prompt, variant),
+        },
+        llmResponse: null,
+      },
+    };
+  }
   const text = llmResult.response;
   const textToolCalls = parseToolCalls(text);
   const nativeToolCalls = parseNativeToolCalls(llmResult.rawResponse);
@@ -240,6 +340,8 @@ async function runVariant({ config, row, scenarioRun, prompt, emailContextBefore
         url: `${config.lmstudioBaseUrl}/chat/completions`,
         model: llmResult.model,
         temperature: 0,
+        maxTokens: config.lmstudioMaxTokens,
+        timeoutMs: config.lmstudioTimeoutMs,
         messages: llmResult.messageAudit,
       },
       llmResponse: {
@@ -285,6 +387,8 @@ export async function runRows(config, options) {
     dataDir: config.dataDir,
     lmstudioBaseUrl: config.lmstudioBaseUrl,
     lmstudioModel: config.lmstudioModel || '(auto-detect from /v1/models)',
+    lmstudioMaxTokens: config.lmstudioMaxTokens,
+    lmstudioTimeoutMs: config.lmstudioTimeoutMs,
     phase: options.phase,
     level: options.level || '(any level)',
     levels: options.level ? null : options.levels || '(any level set)',
@@ -298,6 +402,11 @@ export async function runRows(config, options) {
     ? undefined
     : options.levels || (options.phase === 'phase1' ? PHASE1_SPOTLIGHT_LEVELS : undefined);
   let promptSnapshot = null;
+  const outputDir = options.outputDir || null;
+  if (outputDir) {
+    mkdirSync(outputDir, { recursive: true });
+    writeFileSync(join(outputDir, 'results.jsonl'), '');
+  }
   const rows = await loadSubmissions({
     dataDir: config.dataDir,
     phase: options.phase,
@@ -322,7 +431,7 @@ export async function runRows(config, options) {
   });
 
   const results = [];
-  for (const row of rows) {
+  for (const [index, row] of rows.entries()) {
     const scenarioRun = buildDatasetReplayRun(row);
     const originalSystemPrompt = `${prompts.email_client}\n\n${prompts.tool_prompt}`;
     const unsafeSystemPrompt = prompts.tool_prompt;
@@ -375,6 +484,9 @@ export async function runRows(config, options) {
       model: config.lmstudioModel || '(auto-detect)',
       variants: ['unsafeBaseline', 'baseline', 'defended'],
     });
+    progress(options, `row ${index + 1}/${rows.length} ${row.scenario} ${row.rowKey}`);
+
+    progress(options, `row ${index + 1}/${rows.length} unsafeBaseline start`);
     const unsafeBaseline = await runVariant({
       config,
       row,
@@ -383,6 +495,12 @@ export async function runRows(config, options) {
       emailContextBeforeDefense,
       variant: 'unsafeBaseline',
     });
+    progress(
+      options,
+      `row ${index + 1}/${rows.length} unsafeBaseline done exfil.sent=${unsafeBaseline.objectives['exfil.sent']} error=${Boolean(unsafeBaseline.error)}`,
+    );
+
+    progress(options, `row ${index + 1}/${rows.length} baseline start`);
     const baseline = await runVariant({
       config,
       row,
@@ -391,6 +509,12 @@ export async function runRows(config, options) {
       emailContextBeforeDefense,
       variant: 'baseline',
     });
+    progress(
+      options,
+      `row ${index + 1}/${rows.length} baseline done exfil.sent=${baseline.objectives['exfil.sent']} error=${Boolean(baseline.error)}`,
+    );
+
+    progress(options, `row ${index + 1}/${rows.length} defended start`);
     const defended = await runVariant({
       config,
       row,
@@ -399,6 +523,10 @@ export async function runRows(config, options) {
       emailContextBeforeDefense,
       variant: 'defended',
     });
+    progress(
+      options,
+      `row ${index + 1}/${rows.length} defended done exfil.sent=${defended.objectives['exfil.sent']} error=${Boolean(defended.error)}`,
+    );
     trace(options, 'model responses scored', {
       unsafeBaseline: {
         responsePreview: preview(unsafeBaseline.response, 1000),
@@ -417,7 +545,7 @@ export async function runRows(config, options) {
       },
     });
 
-    results.push({
+    const rowResult = {
       rowKey: row.rowKey,
       scenario: row.scenario,
       scenarioKey: scenarioRun.scenarioKey,
@@ -428,19 +556,31 @@ export async function runRows(config, options) {
         baseline,
         defended,
       },
-    });
+    };
+    results.push(rowResult);
+
+    if (outputDir) {
+      appendFileSync(join(outputDir, 'results.jsonl'), `${JSON.stringify(rowResult)}\n`);
+      writeCheckpoint(
+        options.command || 'run',
+        outputDir,
+        results,
+        buildRunMetadata(config, prompts, { ...options, levels }, promptSnapshot),
+      );
+    }
   }
 
   return {
     results,
     metadata: buildRunMetadata(config, prompts, { ...options, levels }, promptSnapshot),
+    outputDir,
   };
 }
 
 export function writeRunResults(command, runOutput, metadata = {}) {
   const results = Array.isArray(runOutput) ? runOutput : runOutput.results;
   const runMetadata = Array.isArray(runOutput) ? metadata : runOutput.metadata;
-  const dir = join('runs', new Date().toISOString().replace(/[:.]/g, '-'));
+  const dir = runOutput.outputDir || createRunDir();
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
 
   const summary = buildRunSummary(command, results, { ...runMetadata, ...metadata });

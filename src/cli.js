@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { asPositiveInt, loadConfig, normalizePhase, parseArgs } from './config.js';
-import { runRows, setup, writeRunResults } from './runner.js';
+import { createRunDir, runRows, setup, writeRunResults } from './runner.js';
 
 function printUsage() {
   console.log(`Usage:
@@ -15,6 +15,7 @@ Options:
   --scenario <scenario_1>
   --limit <n>
   --trace
+  --progress
 
 Default:
   Phase 1 runs use Spotlight levels level1e/f through level4e/f unless --level is set.`);
@@ -27,6 +28,7 @@ function buildRunOptions(args, defaultLimit) {
     scenario: typeof args.scenario === 'string' ? args.scenario : undefined,
     limit: asPositiveInt(args.limit, defaultLimit),
     trace: args.trace === true,
+    progress: args.progress === true,
   };
 }
 
@@ -50,7 +52,8 @@ async function main() {
   }
 
   if (command === 'smoke') {
-    const options = buildRunOptions(args, 1);
+    const outputDir = createRunDir();
+    const options = { ...buildRunOptions(args, 1), command: 'smoke', outputDir };
     const runOutput = await runRows(config, options);
     const { dir, summary } = writeRunResults('smoke', runOutput, options);
     console.log(JSON.stringify({ outputDir: dir, summary, sampleResult: runOutput.results[0] }, null, 2));
@@ -58,7 +61,8 @@ async function main() {
   }
 
   if (command === 'benchmark' || command === 'compare') {
-    const options = buildRunOptions(args, 100);
+    const outputDir = createRunDir();
+    const options = { ...buildRunOptions(args, 100), command, outputDir };
     const runOutput = await runRows(config, options);
     const { dir, summary } = writeRunResults(command, runOutput, options);
     console.log(JSON.stringify({ outputDir: dir, summary }, null, 2));
