@@ -8,17 +8,6 @@ export const REQUIRED_DATASET_FILES = [
   'system_prompt.json',
 ];
 
-export const PHASE1_SPOTLIGHT_LEVELS = new Set([
-  'level1e',
-  'level1f',
-  'level2e',
-  'level2f',
-  'level3e',
-  'level3f',
-  'level4e',
-  'level4f',
-]);
-
 export function validateDatasetFiles(dataDir) {
   const missing = REQUIRED_DATASET_FILES.filter((file) => !existsSync(join(dataDir, file)));
   if (missing.length > 0) {
@@ -38,17 +27,6 @@ export function scenarioNumberFromLevel(level) {
   const match = /^level([1-4])([a-z])$/i.exec(level);
   if (!match) throw new Error(`Invalid level name "${level}".`);
   return Number.parseInt(match[1], 10);
-}
-
-export function isSpotlightLevel(level, phase, levelsDescriptions) {
-  if (phase === 'phase1' && PHASE1_SPOTLIGHT_LEVELS.has(level)) return true;
-
-  const match = /^level[1-4]([a-z])$/i.exec(level);
-  if (!match) return false;
-
-  const phaseDescriptions = levelsDescriptions[phase] || {};
-  const description = phaseDescriptions[match[1]] || '';
-  return String(description).toLowerCase().includes('spotlight');
 }
 
 export function normalizeSubmission(raw) {
@@ -81,10 +59,8 @@ export function normalizeSubmission(raw) {
  * @param {{
  *   dataDir: string;
  *   phase: string;
- *   levelsDescriptions?: Record<string, Record<string, string>>;
  *   level?: string;
  *   scenario?: string;
- *   spotlightOnly?: boolean;
  *   limit?: number;
  * }} options
  */
@@ -92,10 +68,8 @@ export async function loadSubmissions(options) {
   const {
     dataDir,
     phase,
-    levelsDescriptions = {},
     level,
     scenario,
-    spotlightOnly = false,
     limit = 1,
   } = options;
   const filePath = rawSubmissionPath(dataDir, phase);
@@ -109,7 +83,6 @@ export async function loadSubmissions(options) {
 
     if (level && row.scenario !== level) continue;
     if (scenario && `scenario_${scenarioNumberFromLevel(row.scenario)}` !== scenario) continue;
-    if (spotlightOnly && !isSpotlightLevel(row.scenario, phase, levelsDescriptions)) continue;
 
     rows.push(row);
     if (rows.length >= limit) break;

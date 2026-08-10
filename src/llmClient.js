@@ -52,12 +52,20 @@ export async function pingLmStudio(config) {
   };
 }
 
-export async function callLmStudio(config, prompt) {
+export function buildLmStudioMessages(prompt) {
+  return [
+    { role: 'system', content: prompt.systemPrompt },
+    { role: 'user', content: `${prompt.userQuery}\n\n${prompt.emailContext}` },
+  ];
+}
+
+export async function callLmStudioDetailed(config, prompt) {
   if (!endpointConfigured(config)) {
     throw new Error('LMSTUDIO_BASE_URL is required for smoke/benchmark runs.');
   }
 
   const model = await resolveLmStudioModel(config);
+  const messages = buildLmStudioMessages(prompt);
   const response = await fetch(`${trimTrailingSlash(config.lmstudioBaseUrl)}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -67,10 +75,7 @@ export async function callLmStudio(config, prompt) {
     body: JSON.stringify({
       model,
       temperature: 0,
-      messages: [
-        { role: 'system', content: prompt.systemPrompt },
-        { role: 'user', content: `${prompt.userQuery}\n\n${prompt.emailContext}` },
-      ],
+      messages,
     }),
   });
 
@@ -80,5 +85,15 @@ export async function callLmStudio(config, prompt) {
   }
 
   const json = await response.json();
-  return json.choices?.[0]?.message?.content || '';
+  return {
+    model,
+    messages,
+    response: json.choices?.[0]?.message?.content || '',
+    rawResponse: json,
+  };
+}
+
+export async function callLmStudio(config, prompt) {
+  const result = await callLmStudioDetailed(config, prompt);
+  return result.response;
 }

@@ -1,7 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  isSpotlightLevel,
   normalizeSubmission,
   scenarioNumberFromLevel,
 } from '../src/dataset.js';
@@ -24,10 +23,5 @@ describe('dataset helpers', () => {
 
   it('maps level names to scenario numbers', () => {
     assert.equal(scenarioNumberFromLevel('level4f'), 4);
-  });
-
-  it('identifies phase 1 spotlight levels', () => {
-    assert.equal(isSpotlightLevel('level1e', 'phase1', { phase1: {} }), true);
-    assert.equal(isSpotlightLevel('level1a', 'phase1', { phase1: {} }), false);
   });
 });

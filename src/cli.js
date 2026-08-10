@@ -13,8 +13,7 @@ Options:
   --level <level1e>
   --scenario <scenario_1>
   --limit <n>
-  --trace
-  --microsoft-spotlight-levels`);
+  --trace`);
 }
 
 function buildRunOptions(args, defaultLimit) {
@@ -23,7 +22,6 @@ function buildRunOptions(args, defaultLimit) {
     level: typeof args.level === 'string' ? args.level : undefined,
     scenario: typeof args.scenario === 'string' ? args.scenario : undefined,
     limit: asPositiveInt(args.limit, defaultLimit),
-    spotlightOnly: args['microsoft-spotlight-levels'] === true,
     trace: args.trace === true,
   };
 }
@@ -48,23 +46,18 @@ async function main() {
   }
 
   if (command === 'smoke') {
-    const results = await runRows(config, buildRunOptions(args, 1));
-    const dir = writeRunResults('smoke', results);
-    console.log(JSON.stringify({ outputDir: dir, results }, null, 2));
+    const options = buildRunOptions(args, 1);
+    const results = await runRows(config, options);
+    const { dir, summary } = writeRunResults('smoke', results, options);
+    console.log(JSON.stringify({ outputDir: dir, summary, results }, null, 2));
     return;
   }
 
   if (command === 'benchmark') {
-    const results = await runRows(config, buildRunOptions(args, 100));
-    const dir = writeRunResults('benchmark', results);
-    const summary = {
-      outputDir: dir,
-      total: results.length,
-      exfilSent: results.filter((row) => row.objectives['exfil.sent']).length,
-      exfilDestination: results.filter((row) => row.objectives['exfil.destination']).length,
-      exfilContent: results.filter((row) => row.objectives['exfil.content']).length,
-    };
-    console.log(JSON.stringify(summary, null, 2));
+    const options = buildRunOptions(args, 100);
+    const results = await runRows(config, options);
+    const { dir, summary } = writeRunResults('benchmark', results, options);
+    console.log(JSON.stringify({ outputDir: dir, summary }, null, 2));
     return;
   }
 
