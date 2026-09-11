@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { asPositiveInt, loadConfig, normalizePhase, parseArgs } from './config.js';
+import { downloadDataset } from './download.js';
 import { createRunDir, runRows, setup, writeRunResults } from './runner.js';
 
 function printUsage() {
   console.log(`Usage:
+  npm run download [-- --labelled]
   npm run setup
   npm run smoke -- --phase phase1 --limit 1
   npm run compare -- --phase phase1 --limit 100
@@ -39,6 +41,11 @@ async function main() {
 
   if (!command || command === 'help' || command === '--help') {
     printUsage();
+    return;
+  }
+
+  if (command === 'download') {
+    await downloadDataset(config, { labelled: args.labelled === true });
     return;
   }
 

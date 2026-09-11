@@ -4,7 +4,11 @@
   "description": "",
   "type": "module",
   "main": "src/cli.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "download": "node src/cli.js download",
     "setup": "node src/cli.js setup",
     "smoke": "node src/cli.js smoke",
     "compare": "node src/cli.js compare",
