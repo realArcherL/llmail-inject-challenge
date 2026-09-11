@@ -1,5 +1,31 @@
 # Modal box for Phi-3-medium
 
+## Current pipeline
+
+One A100 container runs everything with plain transformers. No vLLM.
+
+| Step | Command | What it does |
+|---|---|---|
+| Weights | `modal run download_model.py` | one-off, 28 GB into volume `phi3-weights` |
+| Phase 0 | `modal run spike_lens.py` | checks jlens loads Phi-3. Passed on 2026-09-11 |
+| Phase 1 sample | `python analysis/build_phase1_sample.py` | picks 400 payloads, writes exact challenge prompts. Needs pyyaml and tiktoken |
+| Phase 1 run | `modal run phase1_reproduce.py` | 8 samples per prompt, challenge settings. Smoke test: `--limit 4 --n-samples 2 --tag smoke` |
+| Phase 1 report | `python3 analysis/phase1_report.py --tag full` | our replay against Microsoft's own replay |
+
+Supporting files:
+
+- `hfload.py` loads Phi-3 on transformers 5.5+, which jlens requires. It patches one RoPE key in memory; files on the volume are untouched.
+- `llmail_prompt.py` is a faithful port of how the challenge agent prompted Phi-3 and scored tool calls. Level 1 only.
+- `msref/` holds unmodified Microsoft files the port reads, MIT licensed, with the source commit in its README.
+
+Phi-3 has no system role. Its chat template silently drops system messages, so the whole prompt goes in one user turn, exactly as Microsoft's agent did.
+
+## Parked, not used
+
+`serve_vllm.py`, `probe_endpoint.py` and `jacobian_probe.py` belong to the earlier two-GPU plan. They still use the old loading code and would hit the Phi-3 config error. The notes below describe that plan.
+
+## Original notes for the parked files
+
 Order of operations:
 
 1. `pip3 install modal && modal setup`

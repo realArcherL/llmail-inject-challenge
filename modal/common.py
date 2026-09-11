@@ -29,10 +29,12 @@ serve_image = (
     modal.Image.debian_slim(python_version="3.12")
     .uv_pip_install("vllm", "huggingface_hub[hf_transfer]")
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
+    .add_local_python_source("common")  # Modal >=1.0 only uploads the entry file; ship common.py too
 )
 
 probe_image = (
     modal.Image.debian_slim(python_version="3.12")
     .uv_pip_install("torch", "transformers", "accelerate", "huggingface_hub[hf_transfer]")
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
+    .add_local_python_source("common")  # Modal >=1.0 only uploads the entry file; ship common.py too
 )

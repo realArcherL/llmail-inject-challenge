@@ -15,6 +15,7 @@ from common import app, volume, MODEL_DIR, MODEL_PATH
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .uv_pip_install("torch", "transformers", "accelerate", "fastapi[standard]")
+    .add_local_python_source("common")  # Modal >=1.0 only uploads the entry file; ship common.py too
 )
 
 
