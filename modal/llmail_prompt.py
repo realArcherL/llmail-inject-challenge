@@ -92,29 +92,50 @@ def format_emails(emails):  # prompt_utils.py
     return "".join(map(lambda x: f" email: {x}", emails))
 
 
+def level1_parts(email_text, tool_suffix):
+    """Every piece of the level 1 prompt, before any defense touches it.
+
+    `email_text` is the formatted email in the attacker slot: an attack, or a clean
+    email for utility tests. It goes through Microsoft's filter_emails like any
+    submission did. Defenses (Microsoft's spotlighting, your library) are applied on
+    top of these parts, so every condition starts from byte-identical inputs.
+    """
+    r = _refs()
+    cfg = r["config"]
+    tool_name = f"send_email_{tool_suffix}"
+    # BasicEmailRetriever(k=2): keeps level1.json[:1]; with one stored email the attacker goes last.
+    emails = r["level1"][:1] + [filter_emails(email_text, filters=[tool_name])]
+    return {
+        "system_prompt": cfg["llm_system_prompt"],
+        "tool_prompt": cfg["llm_system_prompt_tool"].replace("send_email", tool_name),
+        "query": cfg["scenario_templates"]["scenario1"]["user_prompt"],
+        "formatted_emails": format_emails(emails),
+        "tool_name": tool_name,
+    }
+
+
+def assemble(parts, system_extra="", query=None, emails=None):
+    """Phi3LLM.call_model layout: system rules (+ defense text), blank line, tool prompt,
+    newline, query, blank line, emails. All of it goes in ONE user turn."""
+    system = parts["system_prompt"] + system_extra
+    q = parts["query"] if query is None else query
+    e = parts["formatted_emails"] if emails is None else emails
+    return f"{system}\n\n{parts['tool_prompt']}" + "\n" + q + "\n\n" + e
+
+
+def spotlight_microsoft(parts):
+    """LLMWithDefenses.prompt, phase 1 spotlight branch: tags + fixed datamark 0a8cb271."""
+    pu = _refs()["pu"]
+    extra = pu["SPOTLIGHT_SYS_SUFFIX"] + pu["SPOTLIGHT_DATA_MARK_SUFFIX"]
+    query = pu["SPOTLIGHT_QUERY_FORMAT"].format(parts["query"])
+    marked = pu["SPOTLIGHT_DATA_MARK"].join(parts["formatted_emails"].split(" "))
+    return assemble(parts, extra, query, pu["SPOTLIGHT_EMAILS_FORMAT"].format(marked))
+
+
 def build_level1_prompt(subject, body, spotlight, tool_suffix):
     """Returns (user_message_text, tool_name) exactly as the phase 1 agent sent them to Phi-3."""
-    r = _refs()
-    cfg, pu = r["config"], r["pu"]
-    tool_name = f"send_email_{tool_suffix}"
-    tool_prompt = cfg["llm_system_prompt_tool"].replace("send_email", tool_name)
-    system_prompt = cfg["llm_system_prompt"]
-    query = cfg["scenario_templates"]["scenario1"]["user_prompt"]
-
-    # BasicEmailRetriever(k=2): keeps level1.json[:1]; with one stored email the attacker goes last.
-    attacker = filter_emails(format_email(subject, body), filters=[tool_name])
-    emails = r["level1"][:1] + [attacker]
-    formatted = format_emails(emails)
-
-    if spotlight:  # LLMWithDefenses.prompt, phase 1 branch
-        system_prompt += pu["SPOTLIGHT_SYS_SUFFIX"]
-        query = pu["SPOTLIGHT_QUERY_FORMAT"].format(query)
-        system_prompt += pu["SPOTLIGHT_DATA_MARK_SUFFIX"]
-        formatted = pu["SPOTLIGHT_DATA_MARK"].join(formatted.split(" "))
-        formatted = pu["SPOTLIGHT_EMAILS_FORMAT"].format(formatted)
-
-    system_prompt = f"{system_prompt}\n\n{tool_prompt}"  # Phi3LLM.call_model
-    return system_prompt + "\n" + query + "\n\n" + formatted, tool_name
+    parts = level1_parts(format_email(subject, body), tool_suffix)
+    return (spotlight_microsoft(parts) if spotlight else assemble(parts)), parts["tool_name"]
 
 
 # ---------- parsing and scoring (stdlib only) ----------

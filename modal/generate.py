@@ -1,20 +1,23 @@
-"""PHASE 1: re-run LLMail-Inject level 1 on Phi-3 with Microsoft's exact prompts.
+"""Generic generation job: run Phi-3 on any prompt file with the challenge's settings.
 
-Input:   ../runs/phase1/sample.jsonl          (from analysis/build_phase1_sample.py)
-Output:  ../runs/phase1/results_<tag>.jsonl   one line per generated sample
+Every experiment after 01 uses this. (phase1_reproduce.py is kept unchanged as the exact
+code that produced experiment 01.)
 
-Generation matches the challenge agent (msref/config.yaml): top_p 0.92, at most
-500 new tokens, sampling on. The paper says 1,000 tokens; the released agent code
-says 500, and the code is what ran. The agent never set temperature, so Azure's
-endpoint default applied; that default is not documented, so we default to 1.0.
+Input:   a JSONL prompt file; each row needs "id", "prompt", "tool_name"
+Output:  a JSONL results file; one row per generated answer, carrying the input row's
+         id / base_id / kind / condition plus the answer, parsed tool calls and scores
 
-Re-running with the same --tag resumes: finished prompts are skipped and new answers
-are appended. A dropped connection or a failed batch only costs the prompts in flight.
+Generation matches the challenge agent (msref/config.yaml): top_p 0.92, at most 500 new
+tokens, sampling on, temperature 1.0 unless overridden. The whole prompt goes in one user
+turn, because Phi-3's chat template drops system messages.
 
-Run:
-  modal run phase1_reproduce.py --limit 4 --n-samples 2 --tag smoke                # a few cents
-  modal run phase1_reproduce.py                                                    # full run, or resume it
-  modal run phase1_reproduce.py --condition undefended --temperature 0.7 --tag t07   # sensitivity
+Re-running the same command resumes: finished prompts are skipped and new answers are
+appended. A dropped connection or a failed batch only costs the prompts in flight.
+
+Run from modal/:
+  modal run generate.py --sample runs/02-library-defenses/prompts.jsonl \
+      --out runs/02-library-defenses/generations.jsonl --n-samples 4
+  add --limit 6 for a smoke test, --condition a,b to restrict conditions
 """
 import collections
 import json
@@ -25,27 +28,28 @@ import modal
 from common import app, volume, MODEL_DIR, MODEL_PATH
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SAMPLE = os.path.join(ROOT, "runs", "phase1", "sample.jsonl")
-OUT_DIR = os.path.join(ROOT, "runs", "phase1")
 
 TOP_P = 0.92
-TEMPERATURE = 1.0  # default; override with --temperature for sensitivity runs
+TEMPERATURE = 1.0
 MAX_NEW_TOKENS = 500
 TOKEN_BUDGET = 64_000  # (longest prompt in batch + new tokens) x sequences per generate call
+CARRY = ("base_id", "kind", "condition", "recorded_label")  # copied from input rows to results
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .uv_pip_install("torch", "transformers>=5.5", "accelerate", "jinja2", "pydantic-core")
-    .env({"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"})  # less fragmentation on long prompts
+    .env({"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"})
     .add_local_python_source("common", "hfload", "llmail_prompt")  # Modal >=1.0 only uploads the entry file
 )
 
 
 @app.cls(image=image, gpu="A100-80GB", volumes={MODEL_DIR: volume}, memory=32768,
          timeout=90 * 60, max_containers=8, scaledown_window=60)
-class Phase1:
+class Generator:
     @modal.enter()
     def load(self):
+        import torch
+        import transformers
         import hfload
         cfg = hfload.load_config(MODEL_PATH)
         self.tok = hfload.load_tokenizer(MODEL_PATH, cfg)
@@ -55,6 +59,8 @@ class Phase1:
         self.model = hfload.load_model(MODEL_PATH, cfg)
         eos = self.model.generation_config.eos_token_id
         self.eos = eos if isinstance(eos, list) else [eos]
+        self.runtime = (f"torch {torch.__version__}, transformers {transformers.__version__}, "
+                        f"{torch.cuda.get_device_name(0)}, bfloat16")
 
     def _generate(self, texts, n_ret, temperature):
         import torch
@@ -100,7 +106,6 @@ class Phase1:
         torch.manual_seed(seed)
         stop = set(self.eos) | {self.tok.pad_token_id}
 
-        # Phi-3 has one user turn; the whole challenge prompt lives inside it.
         texts = {it["id"]: self.tok.apply_chat_template(
             [{"role": "user", "content": it["prompt"]}], add_generation_prompt=True, tokenize=False)
             for it in items}
@@ -130,35 +135,45 @@ class Phase1:
                 n_tok = next((k for k, t in enumerate(ids) if t in stop), len(ids))
                 text = self.tok.decode(ids[:n_tok], skip_special_tokens=True)
                 calls = lp.parse_tool_calls(text)
-                results.append({
-                    "id": it["id"], "sample": s, "temperature": temperature,
+                row = {"id": it["id"], "sample": s}
+                row.update({k: it[k] for k in CARRY if k in it})
+                row.update({
+                    "temperature": temperature, "top_p": TOP_P, "max_new_tokens": MAX_NEW_TOKENS,
                     "prompt_tokens": lens[it["id"]], "new_tokens": n_tok,
                     "hit_max_tokens": n_tok >= MAX_NEW_TOKENS,
                     "tool_call_text_present": '{"type": "function"' in text,
                     "tool_calls": calls,
                     **lp.score(calls, it["tool_name"]),
+                    "runtime": self.runtime,
                     "response": text,
                 })
+                results.append(row)
             print(f"batch: {len(batch)} prompts x {n_samples} samples, longest {longest} tokens, "
                   f"{time.time() - t0:.0f}s", flush=True)
         return results
 
 
 @app.local_entrypoint()
-def main(limit: int = 0, n_samples: int = 8, chunk: int = 50, seed: int = 0, tag: str = "full",
-         temperature: float = TEMPERATURE, condition: str = "", overwrite: bool = False):
-    items = [json.loads(line) for line in open(SAMPLE)]
+def main(sample: str = "", out: str = "", limit: int = 0, n_samples: int = 8, chunk: int = 50,
+         seed: int = 0, temperature: float = TEMPERATURE, condition: str = "", kind: str = "",
+         overwrite: bool = False):
+    if not sample or not out:
+        raise SystemExit("pass --sample <prompts.jsonl> and --out <generations.jsonl>, relative to the repo root")
+    sample_path, out_path = os.path.join(ROOT, sample), os.path.join(ROOT, out)
+    items = [json.loads(line) for line in open(sample_path)]
     if condition:
-        items = [it for it in items if it["condition"] == condition]
-    if limit:  # balanced slice across condition x recorded label, for smoke tests
+        keep = set(condition.split(","))
+        items = [it for it in items if it.get("condition") in keep]
+    if kind:
+        items = [it for it in items if it.get("kind") == kind]
+    if limit:  # balanced slice across condition x kind x recorded label, for smoke tests
         by = {}
         for it in items:
-            by.setdefault((it["condition"], it["recorded_label"]), []).append(it)
+            by.setdefault((it.get("condition"), it.get("kind"), it.get("recorded_label")), []).append(it)
         per = max(1, limit // len(by))
         items = [x for group in by.values() for x in group[:per]]
-    out_path = os.path.join(OUT_DIR, f"results_{tag}.jsonl")
 
-    # Resume by default: never clobber finished work (a dropped connection stops the app).
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
     mode = "w"
     if os.path.exists(out_path) and not overwrite:
         lines = [json.loads(line) for line in open(out_path)]
@@ -172,18 +187,18 @@ def main(limit: int = 0, n_samples: int = 8, chunk: int = 50, seed: int = 0, tag
                         f.write(json.dumps(r) + "\n")
         items = [it for it in items if it["id"] not in finished]
         mode = "a"
-        print(f"resuming {out_path}: {len(finished)} prompts done, {len(partial)} partial dropped, {len(items)} to run")
+        print(f"resuming {out}: {len(finished)} prompts done, {len(partial)} partial dropped, {len(items)} to run")
     if not items:
         print("nothing left to run")
         return
 
     chunks = [items[i:i + chunk] for i in range(0, len(items), chunk)]
-    print(f"{len(items)} prompts x {n_samples} samples at temperature {temperature}, {len(chunks)} chunks -> {out_path}")
+    print(f"{len(items)} prompts x {n_samples} samples at temperature {temperature}, {len(chunks)} chunks -> {out}")
     t0 = time.time()
     failed = set()
     calls = [(c, n_samples, seed + i, temperature) for i, c in enumerate(chunks)]
     with open(out_path, mode) as f:
-        for n_done, res in enumerate(Phase1().run.starmap(calls, order_outputs=False, return_exceptions=True), 1):
+        for n_done, res in enumerate(Generator().run.starmap(calls, order_outputs=False, return_exceptions=True), 1):
             if isinstance(res, BaseException):
                 print(f"chunk {n_done}/{len(chunks)} FAILED remotely: {type(res).__name__}: {str(res)[:200]}")
                 continue
@@ -196,4 +211,4 @@ def main(limit: int = 0, n_samples: int = 8, chunk: int = 50, seed: int = 0, tag
             print(f"chunk {n_done}/{len(chunks)} written: {len(good)} samples, {sent} tool calls ({time.time() - t0:.0f}s)")
     if failed:
         print(f"{len(failed)} prompts failed and were not written; rerun the same command to retry them")
-    print(f"done. next: python3 analysis/phase1_report.py --tag {tag}")
+    print("done.")

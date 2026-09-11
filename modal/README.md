@@ -11,10 +11,14 @@ One A100 container runs everything with plain transformers. No vLLM.
 | Phase 1 sample | `python analysis/build_phase1_sample.py` | picks 400 payloads, writes exact challenge prompts. Needs pyyaml and tiktoken |
 | Phase 1 run | `modal run phase1_reproduce.py` | 8 samples per prompt, challenge settings. Smoke test: `--limit 4 --n-samples 2 --tag smoke` |
 | Phase 1 report | `python3 analysis/phase1_report.py --tag full` | our replay against Microsoft's own replay |
+| Exp. 02 inputs | `python analysis/build_library_experiment.py`, then `node analysis/apply_library.mjs`, then `python3 analysis/make_run_list.py` | prompt pieces; prompts defended by the real `spotlighting-datamarking` package; the list to generate |
+| Exp. 02 run | `modal run generate.py --sample runs/02-library-defenses/prompts_run.jsonl --out runs/02-library-defenses/generations.jsonl --n-samples 4 --chunk 25` | Phi-3 answers every defended prompt; resumes if interrupted |
+| Reports | `python analysis/report_01_reproduction.py` and `python analysis/report_02_library.py` | publishable `results/<experiment>/`: REPORT.md, manifest.json, tables, figures |
 
 Supporting files:
 
 - `hfload.py` loads Phi-3 on transformers 5.5+, which jlens requires. It patches one RoPE key in memory; files on the volume are untouched.
+- `generate.py` is the generic generation job for every experiment after 01. `phase1_reproduce.py` stays unchanged as the exact code behind experiment 01.
 - `llmail_prompt.py` is a faithful port of how the challenge agent prompted Phi-3 and scored tool calls. Level 1 only.
 - `msref/` holds unmodified Microsoft files the port reads, MIT licensed, with the source commit in its README.
 
