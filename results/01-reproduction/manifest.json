@@ -1,0 +1,197 @@
+{
+  "experiment": "01-reproduction",
+  "title": "Reproducing LLMail-Inject level 1 on Phi-3-medium",
+  "generated_utc": "2026-09-11T16:40:49Z",
+  "git": {
+    "commit": "941367958b2b327babf4d9837cf1e9ce1ef16dc5",
+    "uncommitted_changes": true
+  },
+  "model": {
+    "id": "microsoft/Phi-3-medium-128k-instruct",
+    "weights_uploaded": "2024-05-02",
+    "weights_unchanged_since_upload": true,
+    "weight_file_lfs_oid_prefixes": {
+      "model-00001-of-00006.safetensors": "f438f5fea1b8",
+      "model-00002-of-00006.safetensors": "218be0ac9171",
+      "model-00003-of-00006.safetensors": "ca6f6b1d156c",
+      "model-00004-of-00006.safetensors": "cee66c06fdcb",
+      "model-00005-of-00006.safetensors": "e147b780080e",
+      "model-00006-of-00006.safetensors": "a97b1288d949"
+    },
+    "dtype": "bfloat16",
+    "loader_note": "config.json RoPE key copied into rope_scaling in memory for transformers>=5.5 (modal/hfload.py)"
+  },
+  "prompt_recipe": {
+    "source": "microsoft/llmail-inject-challenge",
+    "commit": "ad115315c1cb34381d20875d6675a6cfe6ca80fa",
+    "vendored_at": "modal/msref/",
+    "port": "modal/llmail_prompt.py",
+    "layout": "system rules, tool prompt, query and emails in ONE user turn (Phi-3 has no system role)"
+  },
+  "generation": {
+    "top_p": 0.92,
+    "max_new_tokens": 500,
+    "sampling": true,
+    "temperature": "1.0 (agent never set it; Azure's default is undocumented)",
+    "answers_per_prompt": 8,
+    "runtime": [
+      "torch 2.14.0, transformers 5.17.0, NVIDIA A100 80GB, bfloat16 (from the image build log)"
+    ]
+  },
+  "sample": {
+    "per_condition": "100 recorded wins + 100 recorded losses",
+    "seed": 20260911,
+    "eligible": "payloads Microsoft ran 2+ times; crashed jobs excluded"
+  },
+  "files": [
+    {
+      "path": "data/data/raw_submissions_phase1.jsonl",
+      "role": "dataset (Microsoft, HF)",
+      "rows": 370724,
+      "bytes": 1666413489,
+      "sha256": "a9c62eca699dd270fdfbbfbfcc1253f5e5017f6d5a34ff7cb0f2cbb80b7f7c0a"
+    },
+    {
+      "path": "runs/phase1/sample.jsonl",
+      "role": "the 400 attacks and their exact prompts",
+      "rows": 400,
+      "bytes": 2753075,
+      "sha256": "9251ca17764a712f041abe72ff1b4b788db678b44d90b0d6f75254be40880769"
+    },
+    {
+      "path": "runs/phase1/ms_baselines.json",
+      "role": "Microsoft's own replay baselines",
+      "rows": null,
+      "bytes": 514,
+      "sha256": "71c86789c28f60be99de7b6f47f3e2b26eb9ba009156b484f5d84e17cdb25a52"
+    },
+    {
+      "path": "runs/phase1/results_full.jsonl",
+      "role": "every answer, temperature 1.0",
+      "rows": 3200,
+      "bytes": 3711283,
+      "sha256": "ca8bba8b748cca2bef198bdb8ec6639e7251f79f86247b4ad16370a025ea86ef"
+    },
+    {
+      "path": "runs/phase1/results_t07.jsonl",
+      "role": "every answer, temperature 0.7, undefended only",
+      "rows": 1600,
+      "bytes": 1929316,
+      "sha256": "d5f28c920ae04044179023bfec6c60704924ff94cb847840791ca795d73e8347"
+    },
+    {
+      "path": "results/01-reproduction/tables/consistency.csv",
+      "role": "table",
+      "rows": 3,
+      "bytes": 252,
+      "sha256": "7ed11d1a532f11dbbdfe49a886ac45d9f9530bbdd402932abb580551b3e3757b"
+    },
+    {
+      "path": "results/01-reproduction/tables/diagnostics.csv",
+      "role": "table",
+      "rows": 3,
+      "bytes": 412,
+      "sha256": "8d24adb81428d6d5074748f3b7b7f8acaec21277cf0a1b328908c5bce3521b8b"
+    },
+    {
+      "path": "results/01-reproduction/tables/per_attack.csv",
+      "role": "table",
+      "rows": 400,
+      "bytes": 22167,
+      "sha256": "e5879a2a9fcafac1d52553374f8c045ac589b1826a8827afe438433d995187bb"
+    },
+    {
+      "path": "results/01-reproduction/tables/replay_vs_microsoft.csv",
+      "role": "table",
+      "rows": 9,
+      "bytes": 705,
+      "sha256": "a4942da512e27d2ddfb0118373c208a294e7fb6452f076eee4df958342ce3805"
+    },
+    {
+      "path": "results/01-reproduction/figures/replay_vs_microsoft.svg",
+      "role": "figure",
+      "rows": null,
+      "bytes": 16490,
+      "sha256": "f7396b7e1092daee994ee9d9cd6dd5f1f0822d22502d5b644cf31175229f75e3"
+    },
+    {
+      "path": "results/01-reproduction/figures/replay_vs_microsoft.png",
+      "role": "figure",
+      "rows": null,
+      "bytes": 79279,
+      "sha256": "d124023a3c0c2ca763c78e6c6dbd5511f6dc8289b511a6090f80743e6b190890"
+    },
+    {
+      "path": "results/01-reproduction/figures/replay_vs_microsoft_dark.svg",
+      "role": "figure",
+      "rows": null,
+      "bytes": 16490,
+      "sha256": "81726a6b5b8b70817623d132c8d31f1abbba75421dc19276d3b49ea6be949caf"
+    },
+    {
+      "path": "results/01-reproduction/figures/replay_vs_microsoft_dark.png",
+      "role": "figure",
+      "rows": null,
+      "bytes": 78335,
+      "sha256": "2c14901c85549a400ae89743fc5109b0e55ba9039950e98d8d57cddf4f269277"
+    }
+  ],
+  "scripts": [
+    {
+      "path": "analysis/ms_repeat_consistency.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 3392,
+      "sha256": "5f4f3e07e6461b1c71d4b1f3646c6feb3af2a6ffa3021a668479330c553d1dfe"
+    },
+    {
+      "path": "analysis/build_phase1_sample.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 5069,
+      "sha256": "76c7eabc36e69e5c6617735d510217c01f6ece808496f3605dd99f92a7400d59"
+    },
+    {
+      "path": "analysis/phase1_report.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 4694,
+      "sha256": "9780148b6d2976e85ebf5fd9ee833f6fa6f55e5f42c61b15d29a8a32ab111366"
+    },
+    {
+      "path": "analysis/report_01_reproduction.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 19366,
+      "sha256": "66f599211a824ffd9d5b584c52fb2ba0d5763b417979fa0111c4763b1250decb"
+    },
+    {
+      "path": "analysis/reporting.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 5569,
+      "sha256": "45055a6c1b38d84905869aadb10177b332fdf3e1d3177d0bdd25994b621362e3"
+    },
+    {
+      "path": "modal/phase1_reproduce.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 9642,
+      "sha256": "9c7452be1e836263314c51183e554db9d58431d68af6c8f1c8fff957f5fd6198"
+    },
+    {
+      "path": "modal/llmail_prompt.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 7952,
+      "sha256": "88c37f18115e7c155a9d4cc158d5e4d7847adf5aab80c5402439dadf9acfcf2a"
+    },
+    {
+      "path": "modal/hfload.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 1916,
+      "sha256": "7319a5f31383dba26297a9e5a2664e7d53fc4d03e8e3f9baf168382576c1d84e"
+    }
+  ]
+}

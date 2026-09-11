@@ -1,0 +1,291 @@
+{
+  "experiment": "02-library-defenses",
+  "title": "The spotlighting-datamarking library against LLMail-Inject on Phi-3",
+  "generated_utc": "2026-09-11T18:05:34Z",
+  "complete": true,
+  "answers": {
+    "present": 7264,
+    "planned": 7264,
+    "short": []
+  },
+  "git": {
+    "commit": "941367958b2b327babf4d9837cf1e9ce1ef16dc5",
+    "uncommitted_changes": true
+  },
+  "model": {
+    "id": "microsoft/Phi-3-medium-128k-instruct",
+    "weights_uploaded": "2024-05-02",
+    "weights_unchanged_since_upload": true,
+    "weight_file_lfs_oid_prefixes": {
+      "model-00001-of-00006.safetensors": "f438f5fea1b8",
+      "model-00002-of-00006.safetensors": "218be0ac9171",
+      "model-00003-of-00006.safetensors": "ca6f6b1d156c",
+      "model-00004-of-00006.safetensors": "cee66c06fdcb",
+      "model-00005-of-00006.safetensors": "e147b780080e",
+      "model-00006-of-00006.safetensors": "a97b1288d949"
+    },
+    "dtype": "bfloat16",
+    "loader_note": "config.json RoPE key copied into rope_scaling in memory for transformers>=5.5 (modal/hfload.py)"
+  },
+  "prompt_recipe": {
+    "source": "microsoft/llmail-inject-challenge",
+    "commit": "ad115315c1cb34381d20875d6675a6cfe6ca80fa",
+    "vendored_at": "modal/msref/",
+    "port": "modal/llmail_prompt.py",
+    "layout": "system rules, tool prompt, query and emails in ONE user turn (Phi-3 has no system role)"
+  },
+  "generation": {
+    "top_p": 0.92,
+    "max_new_tokens": 500,
+    "sampling": true,
+    "temperature": "1.0 (agent never set it; Azure's default is undocumented)",
+    "answers_per_prompt": 4,
+    "baseline_answers_per_attack": 8,
+    "runtime": [
+      "torch 2.14.0+cu130, transformers 5.17.0, NVIDIA A100 80GB PCIe, bfloat16",
+      "torch 2.14.0+cu130, transformers 5.17.0, NVIDIA A100-SXM4-80GB, bfloat16"
+    ]
+  },
+  "defense_library": {
+    "package": "spotlighting-datamarking",
+    "version": "2.0.0-alpha",
+    "settings": "defaults: alphanumeric markers 7-12 chars, p=0.5, minGap=1, sanitize=true, sandwich=true",
+    "placement": "instruction appended to the system rules, where Microsoft puts its spotlighting suffix"
+  },
+  "conditions": [
+    {
+      "key": "none",
+      "name": "No defense",
+      "description": "Microsoft's level 1 prompt, unchanged"
+    },
+    {
+      "key": "ms_spotlight",
+      "name": "Microsoft spotlighting",
+      "description": "Query and email tags, plus the fixed datamark 0a8cb271 in place of spaces"
+    },
+    {
+      "key": "lib_sanitize",
+      "name": "Library: sanitize only",
+      "description": "Strip invisible, bidirectional and private-use Unicode"
+    },
+    {
+      "key": "lib_markdata",
+      "name": "Library: marker between words",
+      "description": "Sanitize, then a random 7 to 12 character marker replaces every whitespace"
+    },
+    {
+      "key": "lib_randommark",
+      "name": "Library: marker at random points",
+      "description": "Sanitize, then the random marker at about half of safe token boundaries"
+    },
+    {
+      "key": "lib_base64",
+      "name": "Library: base64",
+      "description": "Sanitize, then base64-encode the whole email block"
+    }
+  ],
+  "sample": {
+    "attacks": 200,
+    "clean_emails": 203,
+    "attack_source": "raw_submissions_phase1.jsonl, levels 1a/1c/1g, payloads submitted 2+ times, seed 20260911",
+    "sanitize_only_reused_from_no_defense": {
+      "attack": 199,
+      "clean": 203,
+      "attack_total": 200,
+      "clean_total": 203
+    }
+  },
+  "files": [
+    {
+      "path": "data/data/raw_submissions_phase1.jsonl",
+      "role": "dataset (Microsoft, HF)",
+      "rows": 370724,
+      "bytes": 1666413489,
+      "sha256": "a9c62eca699dd270fdfbbfbfcc1253f5e5017f6d5a34ff7cb0f2cbb80b7f7c0a"
+    },
+    {
+      "path": "runs/02-library-defenses/parts.jsonl",
+      "role": "prompt pieces per input",
+      "rows": 403,
+      "bytes": 6532922,
+      "sha256": "5193d6ad3e8726453e53ef6192755c5c6ed05557ec2c010fa13e6d96e05fd2b3"
+    },
+    {
+      "path": "runs/02-library-defenses/prompts.jsonl",
+      "role": "every prompt, every defense",
+      "rows": 2218,
+      "bytes": 12866507,
+      "sha256": "b6f7a058cd733e82895e5e480369142571a0b473b83eea9fc62695931913988d"
+    },
+    {
+      "path": "runs/02-library-defenses/generations.jsonl",
+      "role": "every answer",
+      "rows": 7264,
+      "bytes": 9296646,
+      "sha256": "3b3259ed0af19c151b00143161ebfcfca0831221022516e631534f06037d41fe"
+    },
+    {
+      "path": "runs/phase1/results_full.jsonl",
+      "role": "no-defense answers for the attacks (experiment 01)",
+      "rows": 3200,
+      "bytes": 3711283,
+      "sha256": "ca8bba8b748cca2bef198bdb8ec6639e7251f79f86247b4ad16370a025ea86ef"
+    },
+    {
+      "path": "results/02-library-defenses/tables/attack_change_vs_no_defense.csv",
+      "role": "table",
+      "rows": 5,
+      "bytes": 586,
+      "sha256": "c5b9f1b0a179ae5bca8325db9dc3605d4e5a98c3e47720907ddb92501843bd84"
+    },
+    {
+      "path": "results/02-library-defenses/tables/attack_success.csv",
+      "role": "table",
+      "rows": 18,
+      "bytes": 1514,
+      "sha256": "87146eddcc6157c897661942cad70fb4421c85768e68c996235ba7a2da854f6a"
+    },
+    {
+      "path": "results/02-library-defenses/tables/per_attack.csv",
+      "role": "table",
+      "rows": 1200,
+      "bytes": 56586,
+      "sha256": "12c1dfb6be76d94540a3a267ed3111af3306a38542d157ef3874dfae093cf72a"
+    },
+    {
+      "path": "results/02-library-defenses/tables/prompt_size.csv",
+      "role": "table",
+      "rows": 12,
+      "bytes": 796,
+      "sha256": "4de632b2f81db8338949d9eb97dd692e73972839c3733c5b6cb8f99e78b2ab9c"
+    },
+    {
+      "path": "results/02-library-defenses/tables/utility_benign_email_in_attacks.csv",
+      "role": "table",
+      "rows": 6,
+      "bytes": 491,
+      "sha256": "4f3e1b20d869f2445826819c460122b1563b70fdfed7eedd4e99d3a2bc7b27b0"
+    },
+    {
+      "path": "results/02-library-defenses/tables/utility_clean_emails.csv",
+      "role": "table",
+      "rows": 6,
+      "bytes": 1252,
+      "sha256": "84b83ab98a19c759140dbc29f2a3c50bf20447d129951f1e799445ad42a999cf"
+    },
+    {
+      "path": "results/02-library-defenses/figures/attack_success_by_defense.svg",
+      "role": "figure",
+      "rows": null,
+      "bytes": 14048,
+      "sha256": "bec514e4bc92e253bc6526dcbf7ba3a4927a508d6563c6d39d17edd6abf3335f"
+    },
+    {
+      "path": "results/02-library-defenses/figures/attack_success_by_defense.png",
+      "role": "figure",
+      "rows": null,
+      "bytes": 70823,
+      "sha256": "e5029d787fb1ca43f96e6a725aae33a8011cd86509792b9c161b955333892d7f"
+    },
+    {
+      "path": "results/02-library-defenses/figures/security_vs_utility.svg",
+      "role": "figure",
+      "rows": null,
+      "bytes": 12713,
+      "sha256": "9b16f156f1684bad730f0505d079da7b44b75a0abf25187d5bd691a550c189d4"
+    },
+    {
+      "path": "results/02-library-defenses/figures/security_vs_utility.png",
+      "role": "figure",
+      "rows": null,
+      "bytes": 68814,
+      "sha256": "e250376c7bcc1ab19e1924ad5aeb10ac321ea89a0fd18e827977c50e67ab9c4d"
+    },
+    {
+      "path": "results/02-library-defenses/figures/attack_success_by_defense_dark.svg",
+      "role": "figure",
+      "rows": null,
+      "bytes": 14048,
+      "sha256": "fb287ee86dcf88ddfdbc57189d12bd8b7b8c9c1cf0c87485a51e8f581b53ada5"
+    },
+    {
+      "path": "results/02-library-defenses/figures/attack_success_by_defense_dark.png",
+      "role": "figure",
+      "rows": null,
+      "bytes": 70240,
+      "sha256": "b0fffe5292c50fa87a09cb9f6f898a320ab0e68b028aa3f66ea652f68b26046d"
+    },
+    {
+      "path": "results/02-library-defenses/figures/security_vs_utility_dark.svg",
+      "role": "figure",
+      "rows": null,
+      "bytes": 12713,
+      "sha256": "ffda85b57c88b37461a29629dbcfa22540da46fd73e127d266b820422d72f929"
+    },
+    {
+      "path": "results/02-library-defenses/figures/security_vs_utility_dark.png",
+      "role": "figure",
+      "rows": null,
+      "bytes": 68501,
+      "sha256": "76a90e343de2d98ec65ce33653286cf3e578e7dab102154ff5a11b7bf7cef43c"
+    }
+  ],
+  "scripts": [
+    {
+      "path": "analysis/build_library_experiment.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 3232,
+      "sha256": "461ac50345f2e95e4c2e1fa0af1c82be71cb01f5fcea00843b98ed0ecd07e669"
+    },
+    {
+      "path": "analysis/apply_library.mjs",
+      "role": "code",
+      "rows": null,
+      "bytes": 3296,
+      "sha256": "75605a58d196461870d9a52e4f850d4a4e53fa204dc3f1bf1c2bc3c66eff1032"
+    },
+    {
+      "path": "analysis/make_run_list.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 1153,
+      "sha256": "0e42b51326048d97a5bbb10aff63336e00b23297f866ff384182056b8cfb2f8b"
+    },
+    {
+      "path": "analysis/report_02_library.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 30241,
+      "sha256": "49f10697a53cc2ddbe06df6723584bf624793b13bcc6a5575a568ba9219fb31e"
+    },
+    {
+      "path": "analysis/reporting.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 5569,
+      "sha256": "45055a6c1b38d84905869aadb10177b332fdf3e1d3177d0bdd25994b621362e3"
+    },
+    {
+      "path": "modal/generate.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 10197,
+      "sha256": "9892c96b0a82684927c836f14dda311440e844c2afb5fd96a0fcdeb83f2be396"
+    },
+    {
+      "path": "modal/llmail_prompt.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 7952,
+      "sha256": "88c37f18115e7c155a9d4cc158d5e4d7847adf5aab80c5402439dadf9acfcf2a"
+    },
+    {
+      "path": "modal/hfload.py",
+      "role": "code",
+      "rows": null,
+      "bytes": 1916,
+      "sha256": "7319a5f31383dba26297a9e5a2664e7d53fc4d03e8e3f9baf168382576c1d84e"
+    }
+  ]
+}

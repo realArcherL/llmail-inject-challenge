@@ -1,0 +1,7 @@
+condition,defense,attacks,benign_key_term_recall,ci_low,ci_high,vs_no_defense_same_attacks
+none,No defense,200,0.5272,0.4989,0.5547,1.0
+ms_spotlight,Microsoft spotlighting,200,0.5381,0.5198,0.5566,1.0206
+lib_sanitize,Library: sanitize only,200,0.5273,0.499,0.5548,1.0002
+lib_markdata,Library: marker between words,200,0.3133,0.2858,0.3413,0.5942
+lib_randommark,Library: marker at random points,200,0.594,0.5744,0.6138,1.1266
+lib_base64,Library: base64,200,0.0332,0.0312,0.0353,0.0629

@@ -1,0 +1,4 @@
+condition,temperature,microsoft_agreement,ours_agreement,ours_ci_low,ours_ci_high,rank_correlation
+undefended,1.0,0.8118,0.7836,0.7552,0.8145,0.6765
+spotlight,1.0,0.9257,0.9052,0.8809,0.9289,0.3934
+undefended,0.7,0.8118,0.8282,0.7998,0.8591,0.7168

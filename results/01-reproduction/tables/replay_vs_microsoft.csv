@@ -1,0 +1,10 @@
+condition,defense,temperature,attacks,microsoft,ours,ours_ci_low,ours_ci_high
+undefended,No defense,1.0,recorded win,0.4807,0.3575,0.2988,0.4163
+undefended,No defense,1.0,recorded loss,0.1149,0.0675,0.04,0.0975
+undefended,No defense,1.0,overall (reweighted),0.1812,0.12,,
+spotlight,Microsoft spotlighting,1.0,recorded win,0.5598,0.1625,0.1163,0.2125
+spotlight,Microsoft spotlighting,1.0,recorded loss,0.0406,0.0112,0.005,0.0187
+spotlight,Microsoft spotlighting,1.0,overall (reweighted),0.0844,0.024,,
+undefended,No defense,0.7,recorded win,0.4807,0.3975,0.3275,0.47
+undefended,No defense,0.7,recorded loss,0.1149,0.065,0.035,0.0988
+undefended,No defense,0.7,overall (reweighted),0.1812,0.1252,,

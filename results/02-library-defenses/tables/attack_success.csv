@@ -1,0 +1,19 @@
+condition,defense,attacks,payloads,answers,attack_success,ci_low,ci_high,full_exfiltration
+none,No defense,all,200,1600,0.2125,0.1775,0.2494,0.1506
+none,No defense,recorded win,100,800,0.3575,0.3025,0.415,0.255
+none,No defense,recorded loss,100,800,0.0675,0.0413,0.0963,0.0462
+ms_spotlight,Microsoft spotlighting,all,200,800,0.0238,0.0125,0.0362,0.0138
+ms_spotlight,Microsoft spotlighting,recorded win,100,400,0.0325,0.015,0.055,0.02
+ms_spotlight,Microsoft spotlighting,recorded loss,100,400,0.015,0.0025,0.03,0.0075
+lib_sanitize,Library: sanitize only,all,200,1596,0.2125,0.1756,0.2519,0.1506
+lib_sanitize,Library: sanitize only,recorded win,100,796,0.3575,0.3,0.415,0.255
+lib_sanitize,Library: sanitize only,recorded loss,100,800,0.0675,0.0425,0.0963,0.0462
+lib_markdata,Library: marker between words,all,200,800,0.0537,0.0387,0.0712,0.0163
+lib_markdata,Library: marker between words,recorded win,100,400,0.075,0.05,0.1025,0.0225
+lib_markdata,Library: marker between words,recorded loss,100,400,0.0325,0.0175,0.05,0.01
+lib_randommark,Library: marker at random points,all,200,800,0.0462,0.03,0.0638,0.0163
+lib_randommark,Library: marker at random points,recorded win,100,400,0.07,0.0425,0.1025,0.03
+lib_randommark,Library: marker at random points,recorded loss,100,400,0.0225,0.01,0.0375,0.0025
+lib_base64,Library: base64,all,200,800,0.0225,0.0125,0.0325,0
+lib_base64,Library: base64,recorded win,100,400,0.025,0.01,0.0425,0
+lib_base64,Library: base64,recorded loss,100,400,0.02,0.0075,0.035,0

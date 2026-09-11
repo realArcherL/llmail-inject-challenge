@@ -4,3 +4,4 @@ node_modules
 runs
 .env
 my_notes
+__pycache__/
