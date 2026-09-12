@@ -1,0 +1,5 @@
+condition,name,n,mean_change,change_lo,change_hi,fraction_lower,rank_corr_before_after
+ms_spotlight,Microsoft spotlighting,199,-0.0456,-0.0685,-0.025,0.8342,0.3508
+lib_markdata,Library as shipped (marker between words),199,-0.0525,-0.0775,-0.03,0.6834,0.2769
+lib_base64,"Library, base64",200,-0.0585,-0.0835,-0.0352,0.975,0.3483
+v2_uni_random_phi3,"Library fixed (short Unicode, Phi-3 boundaries)",200,-0.0247,-0.0457,-0.0042,0.72,0.602

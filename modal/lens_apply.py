@@ -8,12 +8,22 @@ the very end of the prompt (the position that produces the first generated token
 Study B replays a recorded answer through the model (the prompt plus that answer, teacher forcing)
 and reads along the answer, so a winning run and a losing run of the SAME prompt can be compared.
 
+Study C is a conversation: the prompt, a recorded answer, then a second human turn (for example,
+telling the model it was just prompt-injected). It reads every token of that second turn and the
+position that produces the reply, so what the model makes of being told can be seen token by token.
+
+Study A items may carry only some spans: any of benign_email_end / attacker_email_end is read only
+when its span is present (defended prompts cannot always locate the emails under the markers), and
+prompt_end is always read.
+
 For every (layer, position) it saves the top words the lens reads, plus the probability it assigns to
 a fixed set of tool-call words, which is the quantity the analysis compares.
 
 Run:
   modal run lens_apply.py --limit 8                     # trial, pennies
-  modal run lens_apply.py                               # everything
+  modal run lens_apply.py                               # everything in sample.jsonl
+  modal run lens_apply.py --sample runs/03-jacobian-lens/sample_defended.jsonl \
+                          --out runs/03-jacobian-lens/readouts_defended.jsonl
 """
 import json
 import os
@@ -34,6 +44,8 @@ TOOL_WORDS = ["send", " send", "email", " email", "contact", " contact", "@", "c
               " confirmation", "function", " function", '{"', "type"]
 TOP_K = 8
 RESPONSE_STRIDE = 8  # read every Nth token of an answer in study B
+TURN_STRIDE = 1      # study C reads every token of the second human turn
+MAX_TOKENS = 16384   # longer than this is refused rather than silently truncated
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -103,8 +115,11 @@ class LensReader:
         return len(enc["input_ids"]) - 1
 
     def _read(self, text, positions, labels):
+        n = len(self.tok(text, add_special_tokens=False)["input_ids"])
+        if n > MAX_TOKENS:
+            raise ValueError(f"{n} tokens exceeds MAX_TOKENS={MAX_TOKENS}; refusing to truncate")
         lens_logits, model_logits, ids = self.lens.apply(
-            self.model, text, positions=positions, max_seq_len=8192)
+            self.model, text, positions=positions, max_seq_len=MAX_TOKENS)
         rows = []
         for layer, lg in sorted(lens_logits.items()):
             probs = self.torch.softmax(lg.float(), dim=-1)
@@ -131,13 +146,28 @@ class LensReader:
             try:
                 if it["study"] == "A":
                     text = self._render(it["prompt"])
-                    sp = it["spans"]
+                    sp = it.get("spans") or {}
                     positions, labels = [], []
-                    for label, char in (("benign_email_end", sp["attacker_start"] - 1),
-                                        ("attacker_email_end", sp["attacker_end"] - 1)):
-                        positions.append(self._token_at_char(text, len(self.template_prefix) + char)
+                    for label, key in (("benign_email_end", "attacker_start"),
+                                       ("attacker_email_end", "attacker_end")):
+                        if sp.get(key) is None:
+                            continue
+                        positions.append(self._token_at_char(text, len(self.template_prefix) + sp[key] - 1)
                                          + self.pos_shift)
                         labels.append(label)
+                    positions.append(-1)
+                    labels.append("prompt_end")
+                elif it["study"] == "C":
+                    text = self.tok.apply_chat_template(it["messages"], add_generation_prompt=True,
+                                                        tokenize=False)
+                    turn = it["messages"][-1]["content"]
+                    at = text.rfind(turn)
+                    if at < 0:
+                        raise ValueError("second turn not found in rendered conversation")
+                    first = self._token_at_char(text, at)
+                    last = self._token_at_char(text, at + len(turn) - 1)
+                    positions = [p + self.pos_shift for p in range(first, last + 1, TURN_STRIDE)]
+                    labels = [f"turn_token_{p - first - self.pos_shift}" for p in positions]
                     positions.append(-1)
                     labels.append("prompt_end")
                 else:
@@ -154,6 +184,7 @@ class LensReader:
                 rows, n_tokens = self._read(text, positions, labels)
                 out.append({"id": it["id"], "study": it["study"], "group": it["group"],
                             "base_id": it["base_id"], "outcome": it.get("outcome"),
+                            "condition": it.get("condition"), "variant": it.get("variant"),
                             "success_rate": it.get("success_rate"), "tokens": n_tokens,
                             "seconds": round(time.time() - t0, 1), "readings": rows})
             except Exception as e:  # one bad item must not sink the chunk
@@ -165,18 +196,20 @@ class LensReader:
 
 @app.local_entrypoint()
 def main(limit: int = 0, chunk: int = 20, study: str = "", tag: str = "phi3-wikitext100",
-         out: str = "", overwrite: bool = False):
-    items = [json.loads(line) for line in open(SAMPLE)]
+         out: str = "", overwrite: bool = False, sample: str = ""):
+    # --sample and --out are taken relative to the repo root, not to modal/
+    sample_path = SAMPLE if not sample else (sample if os.path.isabs(sample) else os.path.join(ROOT, sample))
+    items = [json.loads(line) for line in open(sample_path)]
     if study:
         items = [it for it in items if it["study"] == study]
     if limit:
         by = {}
         for it in items:
-            by.setdefault((it["study"], it["group"], it.get("outcome")), []).append(it)
+            by.setdefault((it["study"], it["group"], it.get("outcome"), it.get("condition"),
+                           it.get("variant")), []).append(it)
         per = max(1, limit // len(by))
         items = [x for group in by.values() for x in group[:per]]
 
-    # --out is taken relative to the repo root, not to modal/, which is where modal run starts
     out_path = OUT if not out else (out if os.path.isabs(out) else os.path.join(ROOT, out))
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     mode = "w"

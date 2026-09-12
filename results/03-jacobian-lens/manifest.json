@@ -248,5 +248,135 @@
       "bytes": 2264,
       "sha256": "d050811114e8f1257b1e8321c76017353111c53a0ca3d1ced28db0d6ad30bac3"
     }
-  ]
+  ],
+  "told": {
+    "built_at": "2026-09-12T05:57:39Z",
+    "complete": true,
+    "items_expected": 32,
+    "items_read": 32,
+    "items_failed": 0,
+    "files": [
+      {
+        "path": "results/03-jacobian-lens/tables/told-apology-by-layer.csv",
+        "role": "output",
+        "rows": 11,
+        "bytes": 174,
+        "sha256": "f4f9ff463b481d49095c28e60b8a5f0cc0fea79b1e3b8bdfa2d928424ec6296f"
+      },
+      {
+        "path": "results/03-jacobian-lens/tables/told-differential-words-prompt-end.csv",
+        "role": "output",
+        "rows": 40,
+        "bytes": 1078,
+        "sha256": "ac7b844fdf332984d46e535e07f2e79a32b083035797b8858fc317cd1d2f9848"
+      },
+      {
+        "path": "results/03-jacobian-lens/tables/told-differential-words-along-turn.csv",
+        "role": "output",
+        "rows": 40,
+        "bytes": 1146,
+        "sha256": "8688bceb17225bea660dec37f0735918b73b49889a49c5b0f3e01c2c9b3ab9a7"
+      }
+    ]
+  },
+  "defenses": {
+    "built_at": "2026-09-12T06:00:40Z",
+    "complete": false,
+    "items_expected": 1612,
+    "items_read": 1610,
+    "items_failed": 2,
+    "conditions": [
+      "none",
+      "ms_spotlight",
+      "lib_markdata",
+      "lib_base64",
+      "v2_uni_random_phi3"
+    ],
+    "files": [
+      {
+        "path": "results/03-jacobian-lens/figures/05-defenses-auroc-vs-success.svg",
+        "role": "output",
+        "rows": null,
+        "bytes": 24226,
+        "sha256": "c6b69f0505e71af475f769ba8f9b6fb695ba1c3094d95f75ce627c2c2c730a97"
+      },
+      {
+        "path": "results/03-jacobian-lens/figures/05-defenses-auroc-vs-success.png",
+        "role": "output",
+        "rows": null,
+        "bytes": 72755,
+        "sha256": "4ae5d946bce2434ca90a003a1c55ed90688109089c61871c2c149ff613a3617d"
+      },
+      {
+        "path": "results/03-jacobian-lens/figures/05-defenses-auroc-vs-success-dark.svg",
+        "role": "output",
+        "rows": null,
+        "bytes": 24226,
+        "sha256": "e27f1b912349757f392c09faf700186253a2cfecc6a62f0962d730de4f953d49"
+      },
+      {
+        "path": "results/03-jacobian-lens/figures/05-defenses-auroc-vs-success-dark.png",
+        "role": "output",
+        "rows": null,
+        "bytes": 71982,
+        "sha256": "2594ac4524bd1aa1e0878aab7036fd59a8e2c0bc7170dc83f9445ebdcf5f3d1c"
+      },
+      {
+        "path": "results/03-jacobian-lens/figures/06-defenses-paired-readings.svg",
+        "role": "output",
+        "rows": null,
+        "bytes": 204543,
+        "sha256": "b5aab1ecf0c7381ae34e982fe557060430f02da65e6db1d61eadfad898e324f3"
+      },
+      {
+        "path": "results/03-jacobian-lens/figures/06-defenses-paired-readings.png",
+        "role": "output",
+        "rows": null,
+        "bytes": 224857,
+        "sha256": "84896ba967bc68c46f1ab1476e165f36213cca9ed0a441e5fb03af5c1757c0b5"
+      },
+      {
+        "path": "results/03-jacobian-lens/figures/06-defenses-paired-readings-dark.svg",
+        "role": "output",
+        "rows": null,
+        "bytes": 204543,
+        "sha256": "28e625c2fe6a820dbbbeef12e1e7436f106631b69d4caa5485a1669dd1140e0f"
+      },
+      {
+        "path": "results/03-jacobian-lens/figures/06-defenses-paired-readings-dark.png",
+        "role": "output",
+        "rows": null,
+        "bytes": 219679,
+        "sha256": "8ef8153e6b777163e709c66af5ab207b20216ee09fc44cd60aa52bd1dd9fa078"
+      },
+      {
+        "path": "results/03-jacobian-lens/tables/defenses-prompt-end.csv",
+        "role": "output",
+        "rows": 5,
+        "bytes": 1038,
+        "sha256": "496dff166af2463be249a91d8cb20e86e142047f988123f4082bb186f0681a6e"
+      },
+      {
+        "path": "results/03-jacobian-lens/tables/defenses-paired-change.csv",
+        "role": "output",
+        "rows": 4,
+        "bytes": 442,
+        "sha256": "92046c9341936b2e6f64874c00ee09cf5ca98279405d9464fcae61c7270a0429"
+      },
+      {
+        "path": "results/03-jacobian-lens/tables/defenses-attacker-email-end.csv",
+        "role": "output",
+        "rows": 5,
+        "bytes": 1023,
+        "sha256": "ef04659f552250ffd5e933b195278be5dfb9ce2b86881927fd3807c279294f6e"
+      },
+      {
+        "path": "runs/03-jacobian-lens/readouts_defended.jsonl",
+        "role": "lens readouts",
+        "rows": 1612,
+        "bytes": 37496806,
+        "sha256": "152004aa1386cfb950a608f570908870487d80b872d575cc4964175bba830f13"
+      }
+    ]
+  }
 }

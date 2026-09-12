@@ -15,6 +15,8 @@ pinned by SHA-256 in that experiment's `manifest.json`.
 | 01 | Does this setup reproduce the challenge's recorded outcomes? | [results/01-reproduction](results/01-reproduction/REPORT.md) |
 | 02 | Do Microsoft's spotlighting and the `spotlighting-datamarking` library block the attacks, and at what cost? | [results/02-library-defenses](results/02-library-defenses/REPORT.md) |
 | 03 | With no defense at all, what does the model have in mind while it reads an attack? | [results/03-jacobian-lens](results/03-jacobian-lens/REPORT.md) |
+| 03, defenses | Does a defense change what the model has in mind, or only what it says? | [REPORT-defenses.md](results/03-jacobian-lens/REPORT-defenses.md) |
+| 03, told | What does the model make of being told it was prompt-injected? | [REPORT-told.md](results/03-jacobian-lens/REPORT-told.md) |
 
 ## What you need
 
@@ -32,6 +34,8 @@ pinned by SHA-256 in that experiment's `manifest.json`.
 | Experiment 02b (corrected variants) | 6,448 | about $12 |
 | Experiment 03, fitting the lens | one-off, 47 min on 4 A100s | about $8 |
 | Experiment 03, reading 555 items | 527 GPU-seconds on 6 A100s | under $2 |
+| Experiment 03, defended prompts (1,612) | 1,316 GPU-seconds | about $3 |
+| Experiment 03, told-turn conversations (32) | under a minute of GPU | pennies |
 
 Downloading the model costs no GPU time. Every GPU job resumes if interrupted: rerun the same command.
 
@@ -74,6 +78,14 @@ python3 analysis/build_lens_sample.py         # 403 prompts + 152 recorded answe
 cd modal && modal run lens_fit.py             # fit the lens on WikiText, ~47 min, one-off
 modal run lens_apply.py                       # read all 555 items, ~3 min
 cd .. && python3 analysis/report_03_lens.py
+
+# 6. experiment 03, defenses and the told turn
+python3 analysis/build_lens_sample_defended.py && python3 analysis/build_lens_sample_told.py
+cd modal && modal run lens_apply.py --sample runs/03-jacobian-lens/sample_defended.jsonl \
+    --out runs/03-jacobian-lens/readouts_defended.jsonl --chunk 25
+modal run lens_apply.py --sample runs/03-jacobian-lens/sample_told.jsonl \
+    --out runs/03-jacobian-lens/readouts_told.jsonl --chunk 8
+cd .. && python3 analysis/report_03_defenses.py && python3 analysis/report_03_told.py
 ```
 
 ### What the lens is
@@ -130,8 +142,9 @@ node analysis/apply_library_v2.mjs --provenance-only
 - **Absolute attack rates here are lower than the challenge's**, roughly 0.7 times on undefended
   prompts. Experiment 01 rules out the token limit, the parser, temperature, model weights and prompt
   length; what remains is Azure's serving stack. Compare defenses with each other, not with the paper.
-- **Experiment 03 reads undefended prompts only.** It says nothing about what a defense does to the
-  readings; that would need the same pass over the defended prompts.
+- **Experiment 03's main report reads undefended prompts.** The defended pass is its own report
+  (`REPORT-defenses.md`) and reads two positions, not three: the benign email's end cannot be located
+  under markers.
 - **A lens reading is a probe, not the model's output.** It is what a linear map fitted on unrelated
   English extracts from one hidden state. A high reading on tool words does not mean the model has
   decided to call a tool.

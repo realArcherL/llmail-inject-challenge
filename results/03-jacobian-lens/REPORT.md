@@ -6,6 +6,12 @@ Every number is the lens probability on a fixed list of **tool words** (`send`, 
 
 **Every prompt here is undefended.** The headline layer is fixed at **38**, the deepest layer read and so the readout closest to what the model actually emits, chosen before any separation number was computed. Layers below 20 fail the lens's own depth probes. Per-layer curves are in the figures and `tables/study-a-by-layer.csv`; because the best of 39 layers was not cherry-picked for the headline, those curves should be read as exploratory.
 
+## Three parts
+
+- This file: undefended prompts (studies A and B).
+- [REPORT-defenses.md](REPORT-defenses.md): the same prompts under four defenses, including the spotlighting-datamarking library.
+- [REPORT-told.md](REPORT-told.md): what the model makes of being told it was prompt-injected.
+
 ## The short version
 
 At the last position of the prompt — the one that produces the first generated token, before the model has written anything — the lens separates an attack-bearing prompt from a clean one with **AUROC 0.806 (0.758 to 0.849)**, and the size of the reading tracks how often that attack actually fired across its 8 recorded runs (**rank correlation 0.504 (0.382 to 0.619)**).

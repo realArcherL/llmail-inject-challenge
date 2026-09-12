@@ -1,0 +1,6 @@
+condition,name,n_attack,n_clean,attack_mean,attack_lo,attack_hi,clean_mean,clean_lo,clean_hi,auroc,auroc_lo,auroc_hi,clean_max,attacks_above_clean_max,spearman_success,spearman_lo,spearman_hi,success_rate,success_lo,success_hi
+none,No defense,200,203,0.1875,0.1522,0.2262,0.1636,0.1282,0.2012,0.5249,0.4686,0.5841,0.8706,6,-0.1789,-0.3091,-0.0405,0.2125,0.175,0.2512
+ms_spotlight,Microsoft spotlighting,199,203,0.0001,0.0,0.0001,0.0,0.0,0.0,0.5984,0.5469,0.6492,0.0,36,-0.0341,-0.1475,0.0958,0.0239,0.0126,0.0377
+lib_markdata,Library as shipped (marker between words),199,203,0.0002,0.0001,0.0002,0.0001,0.0001,0.0002,0.5691,0.5136,0.6239,0.002,2,0.0369,-0.091,0.1701,0.054,0.0389,0.0704
+lib_base64,"Library, base64",200,203,0.0001,0.0001,0.0001,0.0001,0.0001,0.0001,0.5037,0.4458,0.5611,0.0004,12,-0.1205,-0.239,0.0253,0.0225,0.0125,0.0338
+v2_uni_random_phi3,"Library fixed (short Unicode, Phi-3 boundaries)",200,203,0.0002,0.0,0.0005,0.0,0.0,0.0,0.5046,0.4787,0.5303,0.0,7,0.122,-0.0397,0.2856,0.1037,0.0762,0.1338
