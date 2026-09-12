@@ -1,15 +1,15 @@
 {
   "experiment": "02-library-defenses",
   "title": "The spotlighting-datamarking library against LLMail-Inject on Phi-3",
-  "generated_utc": "2026-09-11T18:05:34Z",
+  "generated_utc": "2026-09-12T04:02:56Z",
   "complete": true,
   "answers": {
-    "present": 7264,
-    "planned": 7264,
+    "present": 13712,
+    "planned": 13712,
     "short": []
   },
   "git": {
-    "commit": "941367958b2b327babf4d9837cf1e9ce1ef16dc5",
+    "commit": "c0cd316a04278f2ef6e6554d83e735ddafea47ee",
     "uncommitted_changes": true
   },
   "model": {
@@ -47,9 +47,16 @@
     ]
   },
   "defense_library": {
-    "package": "spotlighting-datamarking",
-    "version": "2.0.0-alpha",
-    "settings": "defaults: alphanumeric markers 7-12 chars, p=0.5, minGap=1, sanitize=true, sandwich=true",
+    "published_copy": "spotlighting-datamarking@2.0.0-alpha (node_modules), used for the lib_* conditions",
+    "local_copy": {
+      "resolved_by": "sibling checkout",
+      "path": "/Users/nishantjain/Desktop/Nishant JX/Code/MCP_stuff/spotlighting-datamarking/index.js",
+      "package": "spotlighting-datamarking",
+      "version": "2.1.0-alpha",
+      "index_js_sha256": "e5248e1456d2d04760ff70eb8261cd296d3c77482942451e45c61b684d708dd3",
+      "recorded_utc": "2026-09-12T03:21:57.601Z"
+    },
+    "settings": "defaults unless stated: alphanumeric markers 7-12 chars, p=0.5, minGap=1, sanitize=true, sandwich=true; v2_uni_* use a 1-2 character private-use marker",
     "placement": "instruction appended to the system rules, where Microsoft puts its spotlighting suffix"
   },
   "conditions": [
@@ -82,6 +89,26 @@
       "key": "lib_base64",
       "name": "Library: base64",
       "description": "Sanitize, then base64-encode the whole email block"
+    },
+    {
+      "key": "v2_uni_spaces",
+      "name": "Fixed: short Unicode in spaces",
+      "description": "Sanitize, then a 1-2 character private-use marker replaces every whitespace"
+    },
+    {
+      "key": "v2_uni_random_phi3",
+      "name": "Fixed: short Unicode, Phi-3 points",
+      "description": "Short private-use marker at random boundaries of Phi-3's own tokenizer"
+    },
+    {
+      "key": "v2_alnum_random_phi3",
+      "name": "Fixed: alphanumeric, Phi-3 points",
+      "description": "Stock 7-12 character marker at Phi-3's boundaries: separates placement from marker alphabet"
+    },
+    {
+      "key": "v2_uni_words",
+      "name": "Fixed: short Unicode, word gaps only",
+      "description": "Short private-use marker at word boundaries only: leaves unspaced attack text unmarked"
     }
   ],
   "sample": {
@@ -125,6 +152,13 @@
       "sha256": "3b3259ed0af19c151b00143161ebfcfca0831221022516e631534f06037d41fe"
     },
     {
+      "path": "runs/02-library-defenses/generations_v2.jsonl",
+      "role": "every answer",
+      "rows": 6448,
+      "bytes": 9030354,
+      "sha256": "cd274373dc28dce3a025abe972e8daf3d51b21d9f8fe72b8cef31597b582daa0"
+    },
+    {
       "path": "runs/phase1/results_full.jsonl",
       "role": "no-defense answers for the attacks (experiment 01)",
       "rows": 3200,
@@ -134,100 +168,100 @@
     {
       "path": "results/02-library-defenses/tables/attack_change_vs_no_defense.csv",
       "role": "table",
-      "rows": 5,
-      "bytes": 586,
-      "sha256": "c5b9f1b0a179ae5bca8325db9dc3605d4e5a98c3e47720907ddb92501843bd84"
+      "rows": 9,
+      "bytes": 1015,
+      "sha256": "702a1348b305671e27456eec03a0beb9e5bab1e4020c83775596a89ae6f1f8df"
     },
     {
       "path": "results/02-library-defenses/tables/attack_success.csv",
       "role": "table",
-      "rows": 18,
-      "bytes": 1514,
-      "sha256": "87146eddcc6157c897661942cad70fb4421c85768e68c996235ba7a2da854f6a"
+      "rows": 30,
+      "bytes": 2685,
+      "sha256": "ff7cac25d349f2b4d35ab75d0117350a4a5b10b39240fa63473cc9d9707ca382"
     },
     {
       "path": "results/02-library-defenses/tables/per_attack.csv",
       "role": "table",
-      "rows": 1200,
-      "bytes": 56586,
-      "sha256": "12c1dfb6be76d94540a3a267ed3111af3306a38542d157ef3874dfae093cf72a"
+      "rows": 2000,
+      "bytes": 98148,
+      "sha256": "8fdf6e1bf54733fe8bc23ad7a86a141fa8bbccd2144a0602d6bc218eef4fc178"
     },
     {
       "path": "results/02-library-defenses/tables/prompt_size.csv",
       "role": "table",
-      "rows": 12,
-      "bytes": 796,
-      "sha256": "4de632b2f81db8338949d9eb97dd692e73972839c3733c5b6cb8f99e78b2ab9c"
+      "rows": 20,
+      "bytes": 1430,
+      "sha256": "afee1f66ffb13838bdcc3e5fbf3cc22ad0a009ded883605ffaed542dd91736ad"
     },
     {
       "path": "results/02-library-defenses/tables/utility_benign_email_in_attacks.csv",
       "role": "table",
-      "rows": 6,
-      "bytes": 491,
-      "sha256": "4f3e1b20d869f2445826819c460122b1563b70fdfed7eedd4e99d3a2bc7b27b0"
+      "rows": 10,
+      "bytes": 832,
+      "sha256": "9aaeab90533bab06aad3bb12421ec1bfd89bb30929daf3c3ef086d85821514dd"
     },
     {
       "path": "results/02-library-defenses/tables/utility_clean_emails.csv",
       "role": "table",
-      "rows": 6,
-      "bytes": 1252,
-      "sha256": "84b83ab98a19c759140dbc29f2a3c50bf20447d129951f1e799445ad42a999cf"
+      "rows": 10,
+      "bytes": 2023,
+      "sha256": "731288d84057809b967796cd046d6cf44d75a7d7e9316d54c6f6b34d6601f811"
     },
     {
       "path": "results/02-library-defenses/figures/attack_success_by_defense.svg",
       "role": "figure",
       "rows": null,
-      "bytes": 14048,
-      "sha256": "bec514e4bc92e253bc6526dcbf7ba3a4927a508d6563c6d39d17edd6abf3335f"
+      "bytes": 18507,
+      "sha256": "6dd0a6e5fcc7b9e28df856d5807fd95de33e2d7d118db3815b79de8379b8bb75"
     },
     {
       "path": "results/02-library-defenses/figures/attack_success_by_defense.png",
       "role": "figure",
       "rows": null,
-      "bytes": 70823,
-      "sha256": "e5029d787fb1ca43f96e6a725aae33a8011cd86509792b9c161b955333892d7f"
+      "bytes": 113340,
+      "sha256": "51c68ac55efa86a459b70ce985cd904b67308a3f0eca30105e5cac1822647dcf"
     },
     {
       "path": "results/02-library-defenses/figures/security_vs_utility.svg",
       "role": "figure",
       "rows": null,
-      "bytes": 12713,
-      "sha256": "9b16f156f1684bad730f0505d079da7b44b75a0abf25187d5bd691a550c189d4"
+      "bytes": 14562,
+      "sha256": "da1dcbc828cb1d1099f9027f7b665ef82aed6c9036fb8552aedef9f0bca4080d"
     },
     {
       "path": "results/02-library-defenses/figures/security_vs_utility.png",
       "role": "figure",
       "rows": null,
-      "bytes": 68814,
-      "sha256": "e250376c7bcc1ab19e1924ad5aeb10ac321ea89a0fd18e827977c50e67ab9c4d"
+      "bytes": 91383,
+      "sha256": "72cc690c8e09be8789c8d887d6ed27754d439b73451a5f3b8498d36cac1a782e"
     },
     {
       "path": "results/02-library-defenses/figures/attack_success_by_defense_dark.svg",
       "role": "figure",
       "rows": null,
-      "bytes": 14048,
-      "sha256": "fb287ee86dcf88ddfdbc57189d12bd8b7b8c9c1cf0c87485a51e8f581b53ada5"
+      "bytes": 18507,
+      "sha256": "b4168bbba027a8a739f1442d171a25ba7b3acf75a3ee208cc302c7b1a224cda1"
     },
     {
       "path": "results/02-library-defenses/figures/attack_success_by_defense_dark.png",
       "role": "figure",
       "rows": null,
-      "bytes": 70240,
-      "sha256": "b0fffe5292c50fa87a09cb9f6f898a320ab0e68b028aa3f66ea652f68b26046d"
+      "bytes": 112226,
+      "sha256": "f9f45a6722c1df78fc7d10b0b4b017626a3c9f17795dabbf50142b22e0aedc75"
     },
     {
       "path": "results/02-library-defenses/figures/security_vs_utility_dark.svg",
       "role": "figure",
       "rows": null,
-      "bytes": 12713,
-      "sha256": "ffda85b57c88b37461a29629dbcfa22540da46fd73e127d266b820422d72f929"
+      "bytes": 14562,
+      "sha256": "5b110ff704adb9eefd3a696b08a27bec044c7aa143dc86634223373c612ea6c4"
     },
     {
       "path": "results/02-library-defenses/figures/security_vs_utility_dark.png",
       "role": "figure",
       "rows": null,
-      "bytes": 68501,
-      "sha256": "76a90e343de2d98ec65ce33653286cf3e578e7dab102154ff5a11b7bf7cef43c"
+      "bytes": 90774,
+      "sha256": "3954a6e46916e21d576303a0ac03895c29d93a338a2a8145302e13cdb48357ee"
     }
   ],
   "scripts": [
@@ -242,8 +276,8 @@
       "path": "analysis/apply_library.mjs",
       "role": "code",
       "rows": null,
-      "bytes": 3296,
-      "sha256": "75605a58d196461870d9a52e4f850d4a4e53fa204dc3f1bf1c2bc3c66eff1032"
+      "bytes": 3881,
+      "sha256": "04a0c7a851a6358980373f871abbe53aff2403d5ffb5edbf5634a87e52f63773"
     },
     {
       "path": "analysis/make_run_list.py",
@@ -256,8 +290,8 @@
       "path": "analysis/report_02_library.py",
       "role": "code",
       "rows": null,
-      "bytes": 30241,
-      "sha256": "49f10697a53cc2ddbe06df6723584bf624793b13bcc6a5575a568ba9219fb31e"
+      "bytes": 31481,
+      "sha256": "92d93aeb16f9513e7199c5a249005afcff1571487d3eff239cb80e1e2d8f63d9"
     },
     {
       "path": "analysis/reporting.py",

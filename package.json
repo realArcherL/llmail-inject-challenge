@@ -13,12 +13,18 @@
     "smoke": "node src/cli.js smoke",
     "compare": "node src/cli.js compare",
     "benchmark": "node src/cli.js benchmark",
-    "test": "node --test"
+    "test": "node --test",
+    "prompts:v1": "node analysis/apply_library.mjs",
+    "prompts:v2": "node analysis/apply_library_v2.mjs",
+    "library:which": "node analysis/apply_library_v2.mjs --provenance-only"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "spotlighting-datamarking": "^2.0.0-alpha"
+  },
+  "devDependencies": {
+    "@huggingface/transformers": "^4.2.0"
   }
 }

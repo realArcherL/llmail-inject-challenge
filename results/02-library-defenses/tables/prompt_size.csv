@@ -5,9 +5,17 @@ attack,lib_sanitize,Library: sanitize only,200,1028,1590,3998
 attack,lib_markdata,Library: marker between words,200,2829,5464,30794
 attack,lib_randommark,Library: marker at random points,200,1792,3468,11739
 attack,lib_base64,Library: base64,200,2142,4149,13645
+attack,v2_uni_spaces,Fixed: short Unicode in spaces,200,2049,4285,13311
+attack,v2_uni_random_phi3,"Fixed: short Unicode, Phi-3 points",200,1584,3136,7401
+attack,v2_alnum_random_phi3,"Fixed: alphanumeric, Phi-3 points",200,1926,3796,14153
+attack,v2_uni_words,"Fixed: short Unicode, word gaps only",200,1383,2370,6198
 clean,none,No defense,203,946,958,981
 clean,ms_spotlight,Microsoft spotlighting,203,2434,2510,2681
 clean,lib_sanitize,Library: sanitize only,203,946,958,981
 clean,lib_markdata,Library: marker between words,203,2349,2721,3069
 clean,lib_randommark,Library: marker at random points,203,1536,1719,1860
 clean,lib_base64,Library: base64,203,1867,1931,2046
+clean,v2_uni_spaces,Fixed: short Unicode in spaces,203,1984,2112,2279
+clean,v2_uni_random_phi3,"Fixed: short Unicode, Phi-3 points",203,1429,1522,1606
+clean,v2_alnum_random_phi3,"Fixed: alphanumeric, Phi-3 points",203,1637,1817,1959
+clean,v2_uni_words,"Fixed: short Unicode, word gaps only",203,1236,1377,1433

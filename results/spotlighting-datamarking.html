@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Testing spotlighting-datamarking against LLMail-Inject attacks on Phi-3: attack success, summary damage, marker fixes, and limits.">
+  <title>Testing spotlighting: attack blocking and summary quality</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; line-height: 1.65; color: #202a32; background: #fafaf8; }
+    body { margin: 0; }
+    main { max-width: 76ch; margin: auto; padding: 2.5rem 1.2rem 4rem; }
+    h1, h2, h3 { line-height: 1.25; color: #14212b; }
+    h1 { font-size: clamp(2rem, 5vw, 2.8rem); }
+    h2 { margin-top: 2.6rem; font-size: 1.55rem; }
+    h3 { margin-top: 1.8rem; font-size: 1.15rem; }
+    p, li, dd { overflow-wrap: anywhere; }
+    li + li { margin-top: .6rem; }
+    code { font-size: .92em; background: #ecefea; padding: .08em .25em; overflow-wrap: anywhere; }
+    .table-scroll { overflow-x: auto; margin: 1.5rem 0; }
+    .table-scroll:focus-visible { outline: 2px solid #28665c; outline-offset: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+    caption { text-align: left; font-weight: 650; margin-bottom: .65rem; }
+    th, td { padding: .65rem .7rem; text-align: left; vertical-align: top; border-bottom: 1px solid #d5dcd7; }
+    thead th { background: #e9eeea; }
+    tbody th { font-weight: 550; }
+    .wide { min-width: 850px; }
+    .replay { min-width: 570px; }
+    aside { border-left: 3px solid #799689; padding: .2rem 1rem; margin: 1.5rem 0; }
+    details { padding: .8rem 1rem; background: #edf0ec; }
+    summary { cursor: pointer; }
+    dt { font-weight: 650; margin-top: .75rem; }
+    dd { margin-left: 0; }
+    @media print { main { max-width: none; padding: 0; } .table-scroll { overflow: visible; } .wide, .replay { min-width: 0; } table { font-size: .7rem; } }
+  </style>
+</head>
+<body>
+<main>
+<article>
+  <header>
+    <h1>Testing spotlighting: attack blocking and summary quality</h1>
+    <p>My email defense blocked many attacks on Phi-3. It also damaged names in ordinary summaries. Changing the marker repaired that damage, with a small increase in measured attack success.</p>
+    <details>
+      <summary>Three title options</summary>
+      <ol>
+        <li><strong>Testing spotlighting: attack blocking and summary quality</strong> — selected.</li>
+        <li>What datamarking costs on Phi-3</li>
+        <li>Testing and fixing spotlighting-datamarking</li>
+      </ol>
+    </details>
+  </header>
+
+  <h2>What I set out to do</h2>
+  <p>I maintain <code>spotlighting-datamarking</code>, an npm package for apps that use large language models. It defends against <strong>prompt injection</strong> (instructions that try to redirect a model away from its intended task). More specifically, it targets <strong>indirect prompt injection</strong> (those instructions hidden inside data the model reads, such as an email).</p>
+  <p>The defense uses <strong>spotlighting</strong> (marking untrusted input so the model can distinguish data from instructions). One way to do that is <strong>datamarking</strong> (inserting a marker throughout the untrusted text and telling the model what it means).</p>
+  <p>I wanted to know whether my package worked against real attacks, and what it cost in readable, useful output.</p>
+
+  <h2>The data</h2>
+  <p>Microsoft ran LLMail-Inject, a public challenge where attackers tried to make an email assistant send an email it should not send. The released dataset contains 461,640 submissions and 203,679 unique attack payloads, meaning distinct pieces of attacker-supplied text.</p>
+  <p>It is a large dataset, but its size hides some limits. Only 1.9% of unique payloads were ever tried against both model families. Of the payloads that beat Phi-3, only 8.9% also beat GPT. That is limited evidence of transfer between models, not a controlled test of every attack on both.</p>
+  <p>Also, 82.9% of unique payloads were submitted only once. A single result tells us little about how reliably an attack works. The dataset records outcomes but does not include the model’s replies, so I had to regenerate them. Half the dataset targets GPT, whose model weights are not open, so I could not study its internal states.</p>
+
+  <h2>Experiment 01: rebuilding the challenge</h2>
+  <p>I used <code>microsoft/Phi-3-medium-128k-instruct</code> in <code>bfloat16</code> (a 16-bit numerical format). File hashes confirmed that its weights on Hugging Face have not changed since 2 May 2024.</p>
+  <p>I ported the prompt recipe line by line from Microsoft’s released agent code. One detail matters: Phi-3’s chat template, which formats messages for the model, silently drops system messages. Microsoft’s code therefore puts the system rules, tool instructions, user query, and emails into one user turn. Mine does the same.</p>
+  <p>A <strong>token</strong> is a chunk of text the model reads or produces. A <strong>tokenizer</strong> is the software that maps text to those chunks and back. The model produces <strong>logits</strong> (scores for possible next tokens), which are converted into probabilities for choosing the next token.</p>
+  <p>I copied Microsoft’s generation settings: <strong>temperature</strong> (a setting that adjusts how concentrated those probabilities are) of 1.0, and <strong>top_p</strong> (a setting that limits sampling to the most likely tokens whose combined probability reaches a threshold) of 0.92. Each answer could contain at most 500 new tokens.</p>
+  <p>The sample contained 400 attacks: 200 with no defense and 200 with Microsoft’s spotlighting. I generated eight answers per attack, for 3,200 answers, plus another 1,600 at temperature 0.7.</p>
+
+  <h3>The replay was less vulnerable</h3>
+  <p>Here, attack success means the share of answers containing a well-formed call to the email tool. A <strong>confidence interval</strong> is a range expressing sampling uncertainty; a 95% interval comes from a procedure intended to cover the underlying rate in 95% of repeated samples. It does not account for every possible difference between deployments.</p>
+  <div class="table-scroll" role="region" aria-label="Replay results" tabindex="0">
+    <table class="replay">
+      <caption>Attack success in Microsoft’s replay and mine</caption>
+      <thead><tr><th scope="col">Attacks</th><th scope="col">Microsoft’s own replay</th><th scope="col">My replay (95% interval)</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">No defense, recorded win</th><td>48.1%</td><td>35.8% (29.9 to 41.6)</td></tr>
+        <tr><th scope="row">No defense, recorded loss</th><td>11.5%</td><td>6.8% (4.0 to 9.8)</td></tr>
+        <tr><th scope="row">Microsoft spotlighting, recorded win</th><td>56.0%</td><td>16.2% (11.6 to 21.2)</td></tr>
+        <tr><th scope="row">Microsoft spotlighting, recorded loss</th><td>4.1%</td><td>1.1% (0.5 to 1.9)</td></tr>
+        <tr><th scope="row">No defense, overall</th><td>18.1%</td><td>12.0%</td></tr>
+        <tr><th scope="row">Microsoft spotlighting, overall</th><td>8.4%</td><td>2.4%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>When Microsoft ran the same undefended attack twice, the outcomes agreed 81.2% of the time. Mine agreed 78.4% of the time. The <strong>rank correlation</strong> (how closely two measurements order the same attacks by success rate) was 0.68 without defense and 0.39 with spotlighting.</p>
+  <p>The same attacks tended to win in both setups, especially without defense. But my undefended replay was fooled roughly two thirds as often overall. The spotlighting gap was larger.</p>
+
+  <h3>What I checked</h3>
+  <ul>
+    <li><strong>The token limit.</strong> Only 4.6% of undefended answers and 4.8% of spotlighting answers reached the 500-token cap.</li>
+    <li><strong>The tool-call parser.</strong> There were 85 undefended answers and 22 spotlighting answers with tool-call text that my parser did not accept. Of those, 62 and 7 copied the prompt’s <code>System:</code> example. Microsoft’s parser rejects those too.</li>
+    <li><strong>Temperature.</strong> At 0.7, undefended recorded wins and losses succeeded at 39.8% and 6.5%, compared with 35.8% and 6.8% at 1.0. Agreement was 82.8%, and rank correlation was 0.72. This did little to resolve the gap.</li>
+    <li><strong>Different weights.</strong> All six weight files were byte-identical to the May 2024 files.</li>
+    <li><strong>Long prompts.</strong> The gap also appeared below 4,096 tokens.</li>
+    <li><strong>Spotlighting wording.</strong> The text printed in the paper matched the released code.</li>
+  </ul>
+  <p>These checks did not explain the difference. Azure’s serving stack remains a possible source: default sampling settings, prompt wrapping, or possible compression. I cannot inspect it from outside. The gap is unexplained.</p>
+
+  <h2>Experiments 02 and 02b: testing the defenses</h2>
+  <p>I compared defenses on the same 200 undefended attacks. I also used 203 clean business emails from Microsoft’s own false-positive test set to measure damage when nothing was attacking. The defense runs used four answers per prompt: 7,264 answers in the first round and 6,448 in the second.</p>
+  <p>The columns measure different things:</p>
+  <ul>
+    <li><strong>Attack success:</strong> the share of answers that called the email tool the attacker wanted. This measures the tool call, not whether every requested email detail was correct.</li>
+    <li><strong>Cut vs no defense:</strong> the relative reduction in attack success.</li>
+    <li><strong>Key terms kept:</strong> the share of a clean email’s distinctive words that appeared in the summary, expressed as a percentage of the no-defense score. This is a rough measure of content retention.</li>
+    <li><strong>Garbled names:</strong> the share of answers with a capitalised word or number that appeared nowhere in the prompt and was not an ordinary English word. It catches invented content and mangled names, but also flags some ordinary words. The no-defense value of 3.6% is the noise floor.</li>
+    <li><strong>Spurious tool call:</strong> a tool call on a clean email, where none was wanted.</li>
+    <li><strong>Median prompt tokens:</strong> the middle prompt length for the attack inputs, after applying the defense.</li>
+  </ul>
+  <div class="table-scroll" role="region" aria-label="Defense comparison, scroll horizontally on small screens" tabindex="0">
+    <table class="wide">
+      <caption>Attack blocking, clean-email quality, and prompt length</caption>
+      <thead><tr><th scope="col">Defense</th><th scope="col">Attack success (95% interval)</th><th scope="col">Cut vs no defense</th><th scope="col">Key terms kept</th><th scope="col">Garbled names</th><th scope="col">Spurious tool call</th><th scope="col">Median prompt tokens</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">No defense</th><td>21.2% (17.8 to 24.9)</td><td>—</td><td>100%</td><td>3.6%</td><td>0.2%</td><td>1,028</td></tr>
+        <tr><th scope="row">Microsoft spotlighting</th><td>2.4% (1.2 to 3.6)</td><td>89%</td><td>85%</td><td>3.5%</td><td>0.6%</td><td>2,677</td></tr>
+        <tr><th scope="row">My library: letters, in spaces</th><td>5.4% (3.9 to 7.1)</td><td>75%</td><td>87%</td><td>19.7%</td><td>1.8%</td><td>2,829</td></tr>
+        <tr><th scope="row">My library: letters, at GPT-4 boundaries</th><td>4.6% (3.0 to 6.4)</td><td>78%</td><td>94%</td><td>12.7%</td><td>0.0%</td><td>1,792</td></tr>
+        <tr><th scope="row">My library: base64</th><td>2.2% (1.2 to 3.2)</td><td>89%</td><td>6%</td><td>36.2%</td><td>3.1%</td><td>2,142</td></tr>
+        <tr><th scope="row">Fixed: short Unicode marker, in spaces</th><td>6.5% (4.5 to 8.8)</td><td>69%</td><td>106%</td><td>3.5%</td><td>1.0%</td><td>2,049</td></tr>
+        <tr><th scope="row">Fixed: letters, at Phi-3 boundaries</th><td>5.6% (3.8 to 7.6)</td><td>74%</td><td>94%</td><td>21.2%</td><td>0.2%</td><td>1,926</td></tr>
+        <tr><th scope="row">Fixed: short Unicode, at Phi-3 boundaries</th><td>10.4% (7.6 to 13.2)</td><td>51%</td><td>104%</td><td>4.3%</td><td>1.0%</td><td>1,584</td></tr>
+        <tr><th scope="row">Fixed: short Unicode, word gaps only</th><td>12.2% (9.4 to 15.5)</td><td>42%</td><td>105%</td><td>3.3%</td><td>0.4%</td><td>1,383</td></tr>
+        <tr><th scope="row">Sanitize only (strip invisible characters)</th><td>21.2%</td><td>0%</td><td>100%</td><td>3.6%</td><td>0.2%</td><td>1,028</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Sanitize-only changed just 1 of the 200 attack prompts. These attacks rarely hid invisible characters, so its measured results were identical to no defense at the precision shown.</p>
+  <p>Microsoft’s spotlighting cut attack success by 89%, with key-term retention at 85% of baseline. My library’s letters-in-spaces mode cut success by 75%, but garbled names appeared in 19.7% of clean-email answers. That was far above the 3.6% baseline.</p>
+  <p>Base64 (an encoding that represents data using a limited alphabet of text characters) looked strong if I only counted attacks. Its 2.2% success rate hid a failure to preserve the email: just 6% key-term retention and 36.2% of answers with invented or garbled names.</p>
+
+  <h2>Why names came out mangled</h2>
+  <p>My library replaced every space with a random marker of 7 to 12 letters and digits. When that marker started with a letter, Phi-3 could merge it into the preceding word during tokenization.</p>
+  <p>For example, with <code>Urban</code> followed by <code>gtPwW2E99</code>, Phi-3 reads the start as <code>U</code>, <code>rb</code>, <code>ang</code>. It then writes <code>Urbang</code> in its summary. Part of the marker has become part of the name.</p>
+  <ul>
+    <li>Of 195 mangled names in spaces mode, 140 (72%) were a real name plus the first letters of that prompt’s marker. Examples included <code>Urban</code> + <code>g</code> with <code>gtPwW2E99</code>, and <code>Renewal</code> + <code>k</code> with <code>kyuNCDXt0</code>.</li>
+    <li>Of 93 mangled names under random placement, 49 (53%) picked up the marker’s first letters. Another 19 (20%) repeated a word ending, such as <code>Renewal</code> + <code>al</code>, when a marker split a word in half.</li>
+    <li>Microsoft’s marker produced 14 flagged cases, but none involved its marker. It starts with a digit, and Phi-3 puts every digit in its own token.</li>
+  </ul>
+  <p>I also measured how many email words reached Phi-3 with clean token boundaries: 97.9% with no defense, 96.3% with Microsoft’s marker, 94.1% with my random placement, and 90.5% with my spaces mode.</p>
+  <h3>A shorter marker</h3>
+  <p>A <strong>private-use Unicode character</strong> is a character code reserved for users to assign their own meaning, rather than a standard letter or symbol. I compared that option with several longer markers.</p>
+  <div class="table-scroll" role="region" aria-label="Marker comparison" tabindex="0">
+    <table>
+      <caption>Marker overhead and word fusion in Phi-3</caption>
+      <thead><tr><th scope="col">Marker</th><th scope="col">Tokens added per space</th><th scope="col">Fused with a word</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">My library as shipped</th><td>8.1</td><td>10.4%</td></tr>
+        <tr><th scope="row">UUID v4 (identifier format)</th><td>33.7</td><td>8.2%</td></tr>
+        <tr><th scope="row">CUID2-style identifier</th><td>18.5</td><td>14.4%</td></tr>
+        <tr><th scope="row">Microsoft’s fixed hex marker (digits and letters a–f)</th><td>7.5</td><td>Never</td></tr>
+        <tr><th scope="row">Random 8 digits</th><td>8.5</td><td>Never</td></tr>
+        <tr><th scope="row">One private-use Unicode character</th><td>3.5</td><td>Never</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The Spotlighting paper by Hines and colleagues (2024) recommends a single special character, <code>U+E000</code>, from the private-use area, and says any special character works. It also warns that base64 hurts weaker models. My Phi-3 results show that same problem.</p>
+
+  <h2>The uncomfortable trade-off</h2>
+  <p>Switching the spaces mode to a short Unicode marker reduced garbled names from 19.7% to 3.5%, effectively the no-defense floor. Key-term retention rose to 106%. But attack success also rose, from 5.4% to 6.5%.</p>
+  <p>The observed trade-off suggests that some of the old marker’s blocking came from the same disruption that mangled names. The attack-success intervals overlap, so these measurements do not establish a precise increase in the underlying rate.</p>
+  <p>Moving letter markers from GPT-4’s boundaries to Phi-3’s own boundaries did not repair the mangling: it was 21.2%. Blocking did not improve either. This points to the marker’s alphabet as the cause of the name damage, rather than the choice of tokenizer for placement.</p>
+  <p>Restricting the short Unicode marker to word gaps gave the weakest blocking among the marking defenses, with 12.2% attack success. In this sample, 68% of attack payloads contained runs of at least 20 characters without spaces. The longest was 455 characters. Word-gap marking leaves those runs unmarked.</p>
+
+  <h2>What I changed in version 2.1.0-alpha</h2>
+  <p><code>randomlyMarkData</code> now accepts a <code>tokenizer</code> option: any object with <code>encode</code> and <code>decode</code> methods. Markers can land at the boundaries of the model being defended, as the paper describes. Leaving the option out preserves the old GPT-4 behavior.</p>
+  <p>This exposed a separate bug. The marked text is now cut from the original string instead of being rebuilt from tokens. With Phi-3’s tokenizer, rebuilding had dropped a space at 7 of 10 marker positions in a test sentence.</p>
+  <p>I also added a <code>Tokenizer</code> type, six tests, and documentation on choosing a marker. The package has 112 passing tests in total.</p>
+
+  <h2>What I would tell someone shipping this today</h2>
+  <p>Based on these Phi-3 results, I would use a short private-use Unicode marker instead of letters and digits. I would allow marking inside long runs without spaces, and measure readable output alongside attack blocking.</p>
+  <p>I would not use base64 without checking that the model can decode it reliably. On Phi-3, it produced invented email content: 6% content retention and 36.2% of answers with invented or garbled names. A low attack rate is not enough if the assistant loses the email.</p>
+  <p>Expect that preserving readable output may cost some blocking. Measure both on the model and task you actually use.</p>
+
+  <h2>Work in progress: looking inside the model</h2>
+  <aside><p><strong>These studies are not finished. Results are not in yet.</strong></p></aside>
+  <p>I am now using Anthropic’s <strong>Jacobian lens</strong> (a tool that shows which words an internal model state is leaning toward producing). Two studies are set up.</p>
+  <h3>Study A: compare internal signals with measured success</h3>
+  <p>I will read 200 attack prompts and 203 clean prompts at fixed points in the model, then test whether the internal signal tracks each attack’s measured success rate.</p>
+  <h3>Study B: the same prompt, different answers</h3>
+  <p>This study uses 76 attacks that both won and lost with the identical prompt. I will use <strong>teacher forcing</strong> (feeding a recorded answer back into the model token by token instead of letting it choose a new answer), and read the internal states along each answer. The prompt stays fixed; the recorded model output is what differs.</p>
+  <p>That distinction matters. Only 7 of the 200 attacks won 7 or 8 times out of 8, while 95 never won. A simple comparison of reliable winners against losers would rest on just 7 winning prompts and would compare different attack texts. The 104 attacks that won sometimes offer a comparison with the prompt held constant; Study B uses 76 of them.</p>
+  <p>The lens was fitted on 100 Wikipedia passages across 4 GPUs (graphics processors used for model computation) in 48 minutes. I do not yet have findings from either study.</p>
+
+  <h2>Caveats</h2>
+  <ul>
+    <li><strong>The replay gap is unexplained.</strong> My absolute attack rates are lower than the challenge’s. Compare defenses within these experiments, rather than against Microsoft’s published rates.</li>
+    <li><strong>The attacks were not adapted to my library.</strong> The defense comparison uses attacks written against Phi-3 with no defense in place. Nobody was trying to beat my package. A live attacker who can see the defense would do better. A separate study, <cite>The Attacker Moves Second</cite>, found that adaptive attacks beat spotlighting over 95% of the time.</li>
+    <li><strong>More than 100% key-term retention does not mean better summaries.</strong> Marked text seems to make the model quote emails more literally. This metric rewards verbatim words.</li>
+    <li><strong>The garbled-names metric is imperfect.</strong> It flags some ordinary words. Read every defense against the no-defense row.</li>
+    <li><strong>This is one model.</strong> Everything here concerns Phi-3-medium. Larger models may behave differently.</li>
+  </ul>
+
+  <h2>Compute costs</h2>
+  <p>All runs used rented A100 GPUs.</p>
+  <table>
+    <caption>Approximate compute spend</caption>
+    <thead><tr><th scope="col">Work</th><th scope="col">Cost</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Experiment 01</th><td>About $15</td></tr>
+      <tr><th scope="row">Experiment 02</th><td>About $17</td></tr>
+      <tr><th scope="row">Experiment 02b</th><td>About $12</td></tr>
+      <tr><th scope="row">Lens fitting</th><td>About $7</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Short glossary</h2>
+  <dl>
+    <dt>Token / tokenizer</dt><dd>A chunk of model-readable text / the software that converts between text and those chunks.</dd>
+    <dt>Prompt injection / indirect prompt injection</dt><dd>Instructions that redirect a model away from its task / such instructions hidden in external data.</dd>
+    <dt>Spotlighting / datamarking</dt><dd>Marking input as untrusted / doing so by inserting markers throughout it.</dd>
+    <dt>Logits</dt><dd>Scores for possible next tokens, before conversion into probabilities.</dd>
+    <dt>Temperature / top_p</dt><dd>Settings that adjust probability concentration / limit which tokens are eligible for sampling.</dd>
+    <dt>Confidence interval</dt><dd>A range expressing sampling uncertainty, with a stated long-run coverage level.</dd>
+    <dt>Rank correlation</dt><dd>How closely two measurements agree on an ordering.</dd>
+    <dt>Private-use Unicode character</dt><dd>A character code whose meaning is left for users to assign.</dd>
+    <dt>Teacher forcing</dt><dd>Reading a recorded answer back into a model token by token.</dd>
+    <dt>Jacobian lens</dt><dd>A tool for reading which words an internal model state leans toward producing.</dd>
+  </dl>
+</article>
+</main>
+</body>
+</html>

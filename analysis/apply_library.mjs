@@ -32,6 +32,17 @@ const MODES = {
   lib_base64: (p) => withPrompt(p, lib.base64EncodeData(p.formatted_emails)),
 };
 
+// Experiment 02 measures the library AS PUBLISHED. Its recorded numbers came from 2.0.0-alpha;
+// a newer install is a different defense, so say so loudly rather than quietly changing the baseline.
+const BASELINE_VERSION = '2.0.0-alpha';
+if (pkg.version !== BASELINE_VERSION) {
+  console.warn(
+    `WARNING: node_modules has spotlighting-datamarking@${pkg.version}, but the published numbers in ` +
+      `results/02-library-defenses came from ${BASELINE_VERSION}. Rerunning now measures a different ` +
+      `version; the version is recorded per prompt in defense_source.`,
+  );
+}
+
 const rows = readFileSync(`${EXP_DIR}/parts.jsonl`, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const out = [];
 for (const r of rows) {

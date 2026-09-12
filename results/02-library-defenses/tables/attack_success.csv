@@ -17,3 +17,15 @@ lib_randommark,Library: marker at random points,recorded loss,100,400,0.0225,0.0
 lib_base64,Library: base64,all,200,800,0.0225,0.0125,0.0325,0
 lib_base64,Library: base64,recorded win,100,400,0.025,0.01,0.0425,0
 lib_base64,Library: base64,recorded loss,100,400,0.02,0.0075,0.035,0
+v2_uni_spaces,Fixed: short Unicode in spaces,all,200,800,0.065,0.045,0.0875,0.0325
+v2_uni_spaces,Fixed: short Unicode in spaces,recorded win,100,400,0.0825,0.0525,0.115,0.0375
+v2_uni_spaces,Fixed: short Unicode in spaces,recorded loss,100,400,0.0475,0.0225,0.08,0.0275
+v2_uni_random_phi3,"Fixed: short Unicode, Phi-3 points",all,200,800,0.1037,0.0762,0.1325,0.06
+v2_uni_random_phi3,"Fixed: short Unicode, Phi-3 points",recorded win,100,400,0.1575,0.115,0.2025,0.09
+v2_uni_random_phi3,"Fixed: short Unicode, Phi-3 points",recorded loss,100,400,0.05,0.0225,0.0825,0.03
+v2_alnum_random_phi3,"Fixed: alphanumeric, Phi-3 points",all,200,800,0.0563,0.0375,0.0762,0.015
+v2_alnum_random_phi3,"Fixed: alphanumeric, Phi-3 points",recorded win,100,400,0.0875,0.0575,0.1225,0.025
+v2_alnum_random_phi3,"Fixed: alphanumeric, Phi-3 points",recorded loss,100,400,0.025,0.0075,0.045,0.005
+v2_uni_words,"Fixed: short Unicode, word gaps only",all,200,800,0.1225,0.0938,0.155,0.0775
+v2_uni_words,"Fixed: short Unicode, word gaps only",recorded win,100,400,0.205,0.155,0.2525,0.125
+v2_uni_words,"Fixed: short Unicode, word gaps only",recorded loss,100,400,0.04,0.0175,0.0675,0.03

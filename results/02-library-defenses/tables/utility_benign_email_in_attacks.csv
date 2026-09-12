@@ -5,3 +5,7 @@ lib_sanitize,Library: sanitize only,200,0.5273,0.499,0.5548,1.0002
 lib_markdata,Library: marker between words,200,0.3133,0.2858,0.3413,0.5942
 lib_randommark,Library: marker at random points,200,0.594,0.5744,0.6138,1.1266
 lib_base64,Library: base64,200,0.0332,0.0312,0.0353,0.0629
+v2_uni_spaces,Fixed: short Unicode in spaces,200,0.5978,0.5668,0.6269,1.1338
+v2_uni_random_phi3,"Fixed: short Unicode, Phi-3 points",200,0.5549,0.5282,0.5833,1.0525
+v2_alnum_random_phi3,"Fixed: alphanumeric, Phi-3 points",200,0.566,0.5459,0.5867,1.0736
+v2_uni_words,"Fixed: short Unicode, word gaps only",200,0.5547,0.5238,0.5855,1.0522

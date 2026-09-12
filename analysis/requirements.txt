@@ -1,0 +1,5 @@
+# Python side of the pipeline (3.10+). The GPU jobs install their own deps inside Modal.
+PyYAML>=6.0        # reads Microsoft's vendored config.yaml
+tiktoken>=0.7      # Microsoft truncated attacker emails with GPT-4's tokenizer
+matplotlib>=3.8    # figures in results/
+modal>=1.0         # only needed to run the GPU jobs

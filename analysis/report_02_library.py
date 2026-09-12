@@ -33,6 +33,14 @@ CONDITIONS = [
     ("lib_markdata", "Library: marker between words", "Sanitize, then a random 7 to 12 character marker replaces every whitespace"),
     ("lib_randommark", "Library: marker at random points", "Sanitize, then the random marker at about half of safe token boundaries"),
     ("lib_base64", "Library: base64", "Sanitize, then base64-encode the whole email block"),
+    ("v2_uni_spaces", "Fixed: short Unicode in spaces",
+     "Sanitize, then a 1-2 character private-use marker replaces every whitespace"),
+    ("v2_uni_random_phi3", "Fixed: short Unicode, Phi-3 points",
+     "Short private-use marker at random boundaries of Phi-3's own tokenizer"),
+    ("v2_alnum_random_phi3", "Fixed: alphanumeric, Phi-3 points",
+     "Stock 7-12 character marker at Phi-3's boundaries: separates placement from marker alphabet"),
+    ("v2_uni_words", "Fixed: short Unicode, word gaps only",
+     "Short private-use marker at word boundaries only: leaves unspaced attack text unmarked"),
 ]
 NAME = {k: n for k, n, _ in CONDITIONS}
 ORDER = [k for k, _, _ in CONDITIONS]
@@ -78,10 +86,14 @@ def term_recall(terms, response):
     return len(terms & got) / len(terms) if terms else float("nan")
 
 
-def load(generations_file):
+def load(generations_files):
     parts = {r["base_id"]: r for r in rp.jsonl(os.path.join(RAW, "parts.jsonl"))}
-    prompts = {r["id"]: r for r in rp.jsonl(os.path.join(RAW, "prompts.jsonl"))}
-    gens = rp.jsonl(generations_file)
+    prompts = {}
+    for name in ("prompts.jsonl", "prompts_v2.jsonl"):
+        path = os.path.join(RAW, name)
+        if os.path.exists(path):
+            prompts.update({r["id"]: r for r in rp.jsonl(path)})
+    gens = [r for f in generations_files for r in rp.jsonl(f)]
     phase1 = [r for r in rp.jsonl(PHASE1_RESULTS) if r["id"] in parts and parts[r["id"]]["kind"] == "attack"]
 
     ans = collections.defaultdict(list)  # (base_id, condition) -> answer rows
@@ -436,17 +448,20 @@ Every raw file is listed with its SHA-256 in `manifest.json`.
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--generations", default=os.path.join(RAW, "generations.jsonl"))
+    ap.add_argument("--generations", nargs="+", default=[
+        p for p in (os.path.join(RAW, "generations.jsonl"), os.path.join(RAW, "generations_v2.jsonl"))
+        if os.path.exists(p)])
     args = ap.parse_args()
     parts, prompts, gens, phase1, ans, aliased = load(args.generations)
     n_samples = max((r["sample"] for r in gens), default=-1) + 1
 
     # Completeness: a partial run must never read as a finished one.
     planned, present = collections.Counter(), collections.Counter()
-    run_list = os.path.join(RAW, "prompts_run.jsonl")
-    if os.path.exists(run_list):
-        for r in rp.jsonl(run_list):
-            planned[(r["kind"], r["condition"])] += n_samples
+    for name in ("prompts_run.jsonl", "prompts_v2.jsonl"):
+        run_list = os.path.join(RAW, name)
+        if os.path.exists(run_list):
+            for r in rp.jsonl(run_list):
+                planned[(r["kind"], r["condition"])] += n_samples
     for r in gens:
         present[(r["kind"], r["condition"])] += 1
     short = [(k, present[k], planned[k]) for k in sorted(planned) if present[k] < planned[k]]
@@ -496,9 +511,13 @@ def main():
         "prompt_recipe": rp.PROMPT_RECIPE,
         "generation": dict(rp.CHALLENGE_GENERATION, answers_per_prompt=n_samples,
                            baseline_answers_per_attack=8, runtime=runtimes or ["see generations.jsonl"]),
-        "defense_library": {"package": "spotlighting-datamarking", "version": "2.0.0-alpha",
-                            "settings": "defaults: alphanumeric markers 7-12 chars, p=0.5, minGap=1, sanitize=true, sandwich=true",
-                            "placement": "instruction appended to the system rules, where Microsoft puts its spotlighting suffix"},
+        "defense_library": {
+            "published_copy": "spotlighting-datamarking@2.0.0-alpha (node_modules), used for the lib_* conditions",
+            "local_copy": json.load(open(os.path.join(RAW, "library_provenance.json")))
+            if os.path.exists(os.path.join(RAW, "library_provenance.json")) else "not recorded",
+            "settings": "defaults unless stated: alphanumeric markers 7-12 chars, p=0.5, minGap=1, sanitize=true, sandwich=true; "
+                        "v2_uni_* use a 1-2 character private-use marker",
+            "placement": "instruction appended to the system rules, where Microsoft puts its spotlighting suffix"},
         "conditions": [{"key": k, "name": n, "description": d} for k, n, d in CONDITIONS],
         "sample": {"attacks": sum(p["kind"] == "attack" for p in parts.values()),
                    "clean_emails": sum(p["kind"] == "clean" for p in parts.values()),
@@ -508,7 +527,7 @@ def main():
             (os.path.join(rp.ROOT, "data", "data", "raw_submissions_phase1.jsonl"), "dataset (Microsoft, HF)"),
             (os.path.join(RAW, "parts.jsonl"), "prompt pieces per input"),
             (os.path.join(RAW, "prompts.jsonl"), "every prompt, every defense"),
-            (args.generations, "every answer"),
+            *[(g, "every answer") for g in args.generations],
             (PHASE1_RESULTS, "no-defense answers for the attacks (experiment 01)"),
         ]] + [rp.file_entry(os.path.join(tdir, f), "table") for f in sorted(os.listdir(tdir))]
           + [rp.file_entry(p, "figure") for p in figs],

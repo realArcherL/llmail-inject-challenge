@@ -1,0 +1,252 @@
+{
+  "experiment": "03-jacobian-lens",
+  "built_at": "2026-09-12T05:20:50Z",
+  "complete": true,
+  "items_expected": 555,
+  "items_read": 555,
+  "items_failed": 0,
+  "model": {
+    "id": "microsoft/Phi-3-medium-128k-instruct",
+    "weights_uploaded": "2024-05-02",
+    "weights_unchanged_since_upload": true,
+    "weight_file_lfs_oid_prefixes": {
+      "model-00001-of-00006.safetensors": "f438f5fea1b8",
+      "model-00002-of-00006.safetensors": "218be0ac9171",
+      "model-00003-of-00006.safetensors": "ca6f6b1d156c",
+      "model-00004-of-00006.safetensors": "cee66c06fdcb",
+      "model-00005-of-00006.safetensors": "e147b780080e",
+      "model-00006-of-00006.safetensors": "a97b1288d949"
+    },
+    "dtype": "bfloat16",
+    "loader_note": "config.json RoPE key copied into rope_scaling in memory for transformers>=5.5 (modal/hfload.py)"
+  },
+  "prompt_recipe": {
+    "source": "microsoft/llmail-inject-challenge",
+    "commit": "ad115315c1cb34381d20875d6675a6cfe6ca80fa",
+    "vendored_at": "modal/msref/",
+    "port": "modal/llmail_prompt.py",
+    "layout": "system rules, tool prompt, query and emails in ONE user turn (Phi-3 has no system role)"
+  },
+  "lens": {
+    "repo": "https://github.com/anthropics/jacobian-lens",
+    "tag": "phi3-wikitext100",
+    "fit_corpus": "100 WikiText passages, 128 tokens each",
+    "layers": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38
+    ],
+    "trusted_from_layer": 20,
+    "headline_layer": 38,
+    "headline_layer_chosen": "deepest layer read, fixed before computing separation",
+    "depth_probe_note": "layers 24/32/38 pass shallow/mid/deep probes; 8 and 16 fail"
+  },
+  "readout": {
+    "top_k": 8,
+    "response_stride": 8,
+    "bins": 10,
+    "note": "tool word list and stride are set in modal/lens_apply.py"
+  },
+  "headline": {
+    "threshold": 0.000869,
+    "n_attack": 200,
+    "n_clean": 203,
+    "n_above": 77,
+    "n_below": 123,
+    "rate_above": 0.3555194805194805,
+    "rate_above_lo": 0.2922077922077922,
+    "rate_above_hi": 0.4253246753246753,
+    "rate_below": 0.12296747967479675,
+    "rate_below_lo": 0.08739837398373984,
+    "rate_below_hi": 0.16056910569105692
+  },
+  "git": {
+    "commit": "c0cd316a04278f2ef6e6554d83e735ddafea47ee",
+    "uncommitted_changes": true
+  },
+  "files": [
+    {
+      "path": "runs/03-jacobian-lens/sample.jsonl",
+      "role": "study inputs",
+      "rows": 555,
+      "bytes": 2722516,
+      "sha256": "37376df8e3d0d1995582ab8b2ca0b78a3c2bcc5357a7385beb8764afc8533922"
+    },
+    {
+      "path": "runs/03-jacobian-lens/readouts.jsonl",
+      "role": "lens readouts",
+      "rows": 555,
+      "bytes": 61051339,
+      "sha256": "f2ce803a048bfdc8fcac7cd16d502cdab759950f123559d3b241f89aeb72aa62"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/01-attack-vs-clean-by-layer-dark.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 112707,
+      "sha256": "3467d3ec6b6116f9b66b76a6b051cb2202f363eb9d7a4646f82b1b20470d0fc3"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/01-attack-vs-clean-by-layer-dark.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 30399,
+      "sha256": "dbff703e5d7e67ffc59eafd56159d6f4cb8a4386d1c13dba0471a7339d1f7c6a"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/01-attack-vs-clean-by-layer.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 115830,
+      "sha256": "afe35d5530c3841979b32c1bda8a7aef7f7dca33b88ddeb9a5afe7d275f00e7a"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/01-attack-vs-clean-by-layer.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 30399,
+      "sha256": "1ac78a9c26cd9687201d083f3dd78e3b42ef70a1b759656c9288abd24cab23b4"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/02-auroc-by-layer-dark.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 118807,
+      "sha256": "b3ef81dbf0a02e0c67b713a5f85317d7807ff785f30d51ed2eb181d9b186121f"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/02-auroc-by-layer-dark.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 16052,
+      "sha256": "470163de62b76ce44f9bd9a758e06b4da2cd892f804ad1809144477fcb2ac8c1"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/02-auroc-by-layer.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 125292,
+      "sha256": "b61053321fd7ed174851f48bbb728efd427565a6b6af6966f41e8f684d5a39aa"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/02-auroc-by-layer.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 16052,
+      "sha256": "3087b42685f35725bb375025a73ab3f6980336a90a768867a84601dd99245979"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/03-reading-vs-success-rate-dark.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 114898,
+      "sha256": "a30ce7fd49dc419c48588a07e8da2682591d114a42a3ca7c0f2cff8813fadc66"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/03-reading-vs-success-rate-dark.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 17601,
+      "sha256": "7c3469838f0584b592a18a3448ca7f17e9af834aebac082ff63297d870c2952c"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/03-reading-vs-success-rate.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 120479,
+      "sha256": "8b970137e3f61b6ef920e1c4f435bf4ff17def1b9ab36213f429c8213b4d3c63"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/03-reading-vs-success-rate.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 17601,
+      "sha256": "e67162d6346e74ead5e86c860683401f5d64173e7ed9056bd1c99af909d1225c"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/04-answer-trajectory-dark.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 187163,
+      "sha256": "d53d00217269b29fb8ef6c1cea0f3de6a4c30bcf24858eca72a52e4137b80535"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/04-answer-trajectory-dark.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 39596,
+      "sha256": "c8f00abf4909bb5833426a3a8fa3ba202288bcafce91855fec67311fe892b597"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/04-answer-trajectory.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 193748,
+      "sha256": "8d78ac74d1b3b1233155d882eec4c63a0f8537e115a0f044965b865ae962c0b4"
+    },
+    {
+      "path": "results/03-jacobian-lens/figures/04-answer-trajectory.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 39596,
+      "sha256": "2cf6fe64ff464fa10513fb3489d3c6f8be0f4d261e19d453d0d9ae72a5b3e999"
+    },
+    {
+      "path": "results/03-jacobian-lens/tables/study-a-by-layer.csv",
+      "role": "output",
+      "rows": 117,
+      "bytes": 12110,
+      "sha256": "abcbfa1722d39c484ec268bc02218da6a91c18d5be27797aceb0287019ec647a"
+    },
+    {
+      "path": "results/03-jacobian-lens/tables/study-b-trajectory.csv",
+      "role": "output",
+      "rows": 190,
+      "bytes": 14491,
+      "sha256": "aa3199d188551050d592b9c87b843471e5247beeda23b7da00534e464499c951"
+    },
+    {
+      "path": "results/03-jacobian-lens/tables/top-words.csv",
+      "role": "output",
+      "rows": 54,
+      "bytes": 2264,
+      "sha256": "d050811114e8f1257b1e8321c76017353111c53a0ca3d1ced28db0d6ad30bac3"
+    }
+  ]
+}
