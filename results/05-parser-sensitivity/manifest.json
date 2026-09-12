@@ -1,0 +1,11 @@
+{
+  "built_at": "2026-09-12T13:41:46Z",
+  "runs": 9604,
+  "strict": 874,
+  "lenient": 1466,
+  "gap": 592,
+  "git": {
+    "commit": "3607f1b4edef0bfebbf29ef00bf16657f2cae7cc",
+    "uncommitted_changes": true
+  }
+}

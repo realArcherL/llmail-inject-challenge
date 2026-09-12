@@ -15,6 +15,7 @@ pinned by SHA-256 in that experiment's `manifest.json`.
 | 01 | Does this setup reproduce the challenge's recorded outcomes? | [results/01-reproduction](results/01-reproduction/REPORT.md) |
 | 02 | Do Microsoft's spotlighting and the `spotlighting-datamarking` library block the attacks, and at what cost? | [results/02-library-defenses](results/02-library-defenses/REPORT.md) |
 | 03 | With no defense at all, what does the model have in mind while it reads an attack? | [results/03-jacobian-lens](results/03-jacobian-lens/REPORT.md) |
+| 05 | How much of the attack rate depends on the agent's tool-call parser? | [results/05-parser-sensitivity](results/05-parser-sensitivity/REPORT.md) |
 | 03, baseline | Does the lens beat just reading the model's own output? | [REPORT-baseline.md](results/03-jacobian-lens/REPORT-baseline.md) |
 | 03, defenses | Does a defense change what the model has in mind, or only what it says? | [REPORT-defenses.md](results/03-jacobian-lens/REPORT-defenses.md) |
 | 03, told | What does the model make of being told it was prompt-injected? | [REPORT-told.md](results/03-jacobian-lens/REPORT-told.md) |
@@ -103,6 +104,10 @@ cd .. && python3 analysis/report_03_robustness.py
 cd modal && modal run lens_apply.py --study A \
     --out runs/03-jacobian-lens/readouts_withmodel.jsonl --chunk 25
 cd .. && python3 analysis/report_03_baseline.py
+
+# 9. parser sensitivity and the run inspector (no GPU, pure re-analysis)
+python3 analysis/report_05_parser.py
+python3 analysis/build_transcript_browser.py
 ```
 
 ### What the lens is

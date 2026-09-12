@@ -1,0 +1,12 @@
+condition,defense,runs,strict,lenient,gap_runs,gap_rate,ratio,full_objective_lenient
+phase1_undefended,No defense,1600,0.2125,0.2994,139,0.0869,1.4088,0.2056
+v2_uni_words,"Fixed: short Unicode, word gaps only",800,0.1225,0.23,86,0.1075,1.8776,0.1462
+v2_uni_random_phi3,"Fixed: short Unicode, Phi-3 points",800,0.1037,0.2037,80,0.1,1.9639,0.1025
+phase1_spotlight,Microsoft spotlighting,1600,0.0869,0.1281,66,0.0413,1.4748,0.0437
+v2_uni_spaces,Fixed: short Unicode in spaces,800,0.065,0.1263,49,0.0612,1.9423,0.0537
+v2_alnum_random_phi3,"Fixed: alphanumeric, Phi-3 points",800,0.0563,0.0975,33,0.0413,1.7333,0.025
+lib_markdata,Library: marker between words,800,0.0537,0.1113,46,0.0575,2.0698,0.0275
+lib_randommark,Library: marker at random points,800,0.0462,0.0912,36,0.045,1.973,0.0275
+ms_spotlight,Microsoft spotlighting (exp 02),800,0.0238,0.0563,26,0.0325,2.3684,0.03
+lib_base64,Library: base64,800,0.0225,0.0612,31,0.0387,2.7222,0.0
+lib_sanitize,Library: sanitize only,4,0.0,0.0,0,0.0,nan,0.0

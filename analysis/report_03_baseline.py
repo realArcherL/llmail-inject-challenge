@@ -115,20 +115,19 @@ def main():
         f"({rp.pct(lens38['rate_above'])} against {rp.pct(m['rate_above'])}), and it tracks the "
         f"success rate a little better ({lens38['spearman_success']:+.3f} against "
         f"{m['spearman_success']:+.3f}), though the intervals overlap.",
-        f"- **Depth trades recall for precision.** The threshold columns show it plainly: the model's "
-        f"output flags {m['n_above']} attacks that win {rp.pct(m['rate_above'])}; layer {L} flags "
-        f"{lens38['n_above']} that win {rp.pct(lens38['rate_above'])}; layer 30 flags only "
-        f"{next(t for t in table if t['measurement'] == 'lens_layer_30')['n_above']} that win "
-        f"{rp.pct(next(t for t in table if t['measurement'] == 'lens_layer_30')['rate_above'])}. "
-        "Every one of those splits has non-overlapping intervals against its own below-threshold "
-        "group. The middle layers are a low-recall, high-precision flag: their AUROC is poor because "
-        "most attacks sit below most clean prompts there, but the few they do surface are the ones "
-        "most likely to succeed. AUROC is the wrong summary for them; the tail is the story.",
-        "- **What the lens is actually for here** is the depth profile — the signal is absent at "
-        "layer 30, a third of the way there at 34, most of the way at 36 — and reading positions the "
-        "model's own decoder cannot be pointed at, such as the end of the attacker's email at layers "
-        "22 to 28, where the injection-shape words appear. Those results do not have a baseline "
-        "equivalent, because there is no output distribution at a middle layer.",
+        "- **The apparent precision of the deep layers is the threshold, not the depth.** Flag the "
+        "same NUMBER of attacks with each signal and ask what share of them fire: at 27 flags the "
+        "model's output gets 55.1% and the best lens layer 55.6%; at 77 flags, 36.0% against 35.6%; "
+        "at 119, 27.8% against 29.4%. Matched flag-for-flag the output equals or beats every layer. "
+        "An earlier version of this report claimed depth bought precision. It does not, and the "
+        "claim has been removed.",
+        "- **The one thing the lens shows that the output does not** is at the end of the attacker's "
+        "email. Neither signal separates attacks from clean prompts by tool-word probability there "
+        "(AUROC 0.50 for both), but the WORDS differ: the instruction and turn-boundary signature "
+        "appears in the model's own top-8 for 27 of 200 attacks (4 of 203 clean), and in the lens's "
+        "for 76 of 200 (2 of 203). Fifty attacks show it to the lens and not to the output. That is "
+        "a description of what the model represents mid-prompt, not a detector, and it is the whole "
+        "of the lens's unique contribution in this work.",
         "",
         "## Reproducing",
         "",

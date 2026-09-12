@@ -413,7 +413,7 @@
     ]
   },
   "baseline": {
-    "built_at": "2026-09-12T12:15:15Z",
+    "built_at": "2026-09-12T13:04:08Z",
     "n_prompts": 403,
     "model_output_auroc": 0.8483866995073892,
     "lens_auroc": 0.8055049261083744,
