@@ -1,0 +1,178 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Where Phi-3 Becomes Readable</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Inter+Tight:wght@400;500;600&display=swap">
+<style>
+:root{color-scheme:light;
+--bg:#f6f5f2;--card:#fffdf9;--sunk:#ebe9e3;--ink:#131416;--ink2:#4d4f55;--mute:#8b8d94;--line:#e0ded7;--line2:#c8c6bd;
+--hot:#c2410c;--hot-bg:#fbeade;--cool:#2563a8;--cool-bg:#e3edf8;--ok:#15683c;--ok-bg:#e0f0e7;--dim:#a8a6a0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+--bg:#101114;--card:#191b1f;--sunk:#212429;--ink:#eceef1;--ink2:#aeb2ba;--mute:#767a83;--line:#282b31;--line2:#383c44;
+--hot:#ef7f4f;--hot-bg:#37200f;--cool:#74a6e0;--cool-bg:#15263c;--ok:#57bd82;--ok-bg:#12301f;--dim:#5d6169}}
+:root[data-theme="dark"]{color-scheme:dark;
+--bg:#101114;--card:#191b1f;--sunk:#212429;--ink:#eceef1;--ink2:#aeb2ba;--mute:#767a83;--line:#282b31;--line2:#383c44;
+--hot:#ef7f4f;--hot-bg:#37200f;--cool:#74a6e0;--cool-bg:#15263c;--ok:#57bd82;--ok-bg:#12301f;--dim:#5d6169}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Lora,Georgia,serif;font-size:18.5px;line-height:1.66}
+a{color:var(--cool);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--cool) 40%,transparent)}
+:focus-visible{outline:2px solid var(--cool);outline-offset:2px}
+code,.mono{font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:.88em}
+.ui{font-family:"Inter Tight",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:0 22px 80px}
+.prose{max-width:640px;margin:0 auto}
+.prose p{margin:0 0 1.15em}
+h1{font-family:"Inter Tight",sans-serif;font-weight:600;font-size:44px;line-height:1.06;letter-spacing:-.025em;margin:0 0 14px;text-wrap:balance}
+h2{font-family:"Inter Tight",sans-serif;font-weight:600;font-size:27px;line-height:1.18;letter-spacing:-.018em;margin:64px 0 14px;text-wrap:balance}
+.kick{font-family:"Space Mono",monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--hot);margin:0 0 12px}
+header{padding:70px 0 10px;max-width:700px;margin:0 auto}
+.lede{font-size:21px;line-height:1.5;color:var(--ink2);margin:0}
+.meta{font-family:"Inter Tight",sans-serif;font-size:13.5px;color:var(--mute);display:flex;flex-wrap:wrap;gap:5px 18px;margin-top:22px}
+.scope{max-width:700px;margin:24px auto 0;background:var(--sunk);border-left:3px solid var(--hot);border-radius:0 8px 8px 0;padding:12px 16px;font-family:"Inter Tight",sans-serif;font-size:14.5px;line-height:1.5}
+.claim{max-width:700px;margin:34px auto;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px 26px}
+.claim p{margin:0;font-size:20px;line-height:1.5}
+.claim b{color:var(--hot)}
+figure{margin:32px 0 40px}
+figure.w{max-width:980px;margin-left:auto;margin-right:auto}
+figcaption{font-family:"Inter Tight",sans-serif;font-size:13.5px;line-height:1.5;color:var(--ink2);margin-top:10px;max-width:640px;margin-left:auto;margin-right:auto}
+figcaption b{color:var(--ink)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.ph{padding:11px 15px;border-bottom:1px solid var(--line);font-family:"Inter Tight",sans-serif;font-size:13.5px;font-weight:600;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ph span.n{font-weight:400;color:var(--mute)}
+.pb{padding:15px}
+svg.ch{width:100%;height:auto;display:block;font-family:"Inter Tight",sans-serif}
+svg.ch text{fill:var(--ink2);font-size:11.5px}
+svg.ch .gr{stroke:var(--line)}
+table.t{width:100%;border-collapse:collapse;font-family:"Inter Tight",sans-serif;font-size:13.5px}
+.t th{text-align:left;font-weight:600;font-size:12px;color:var(--ink2);padding:8px 11px;border-bottom:1px solid var(--line);white-space:nowrap}
+.t td{padding:8px 11px;border-bottom:1px solid var(--line)}
+.t td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.t tr.hi td{background:var(--hot-bg)}
+.wrap{overflow-x:auto}
+.note{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--cool);border-radius:9px;padding:15px 19px;margin:24px 0}
+.note.warn{border-left-color:var(--hot)}
+.note p:last-child{margin:0}
+ul.p{padding-left:1.15em}ul.p li{margin:0 0 .5em}
+footer{max-width:640px;margin:70px auto 0;font-family:"Inter Tight",sans-serif;font-size:12.5px;color:var(--mute);line-height:1.65;border-top:1px solid var(--line);padding-top:16px}
+@media(max-width:640px){h1{font-size:32px}h2{font-size:23px}body{font-size:17.5px}}
+</style>
+
+<main>
+<header>
+<p class="kick">Part one · Phi-3-medium (14B)</p>
+<h1>Where Phi-3 becomes readable</h1>
+<p class="lede">I wanted to fit a Jacobian lens on a small language model and see if that works.</p>
+<div class="meta"><span>Nishant Jain</span><span>September 2026</span></div>
+</header>
+
+<section class="prose">
+<h2>My setup</h2>
+<p>Rented A100s on Modal. I fitted the lens with Anthropic's code, unmodified, on 100 passages of WikiText — 47 minutes, about $8 — then pointed it at 200 real prompt-injection attacks from Microsoft's LLMail-Inject challenge.</p>
+<pre class="mono" style="background:var(--sunk);padding:12px 14px;border-radius:8px;font-size:12.5px;overflow-x:auto;margin:0">modal run lens_fit.py     # fit on WikiText, 47 min, one time
+modal run lens_apply.py   # read the attack prompts, ~3 min</pre>
+</section>
+
+<section class="prose">
+<h2>What it showed me</h2>
+<p><b>Most of the model is unreadable.</b> I probed 30 facts, two phrasings each, four context lengths, every layer, through two lenses fitted on separate text. Nothing decodes below layer 21. It turns on sharply at 22, passes half at 24, and is perfect from 32.</p>
+</section>
+
+<figure class="w">
+<div class="panel"><div class="ph"><span>Can the lens read the answer at this layer?</span><span class="n" id="lg"></span></div><div class="pb"><div id="chart"></div></div></div>
+<figcaption>Fifteen readable layers out of forty — and they are the last fifteen, against the output. The four thin lines are the four context lengths; they sit on top of each other, so context length doesn't degrade it.</figcaption>
+</figure>
+
+<section class="prose">
+<p><b>The model's own output was already better.</b> Telling attack emails from ordinary ones, the model's next-token probabilities scored 0.85. The lens at its best layer scored 0.81, and matched flag-for-flag the output equalled or beat every layer.</p>
+</section>
+
+<figure class="w">
+<div class="panel"><div class="ph"><span>Attack versus ordinary email, same 403 prompts</span><span class="n">0.50 is a coin flip</span></div><div class="pb"><div id="base"></div></div></div>
+<figcaption>The lens climbs toward the output and never passes it.</figcaption>
+</figure>
+
+<section class="prose">
+<p><b>But it won in one place.</b> At the end of the attacker's email — mid-prompt, where there is no output to read — the lens sometimes reads <code>END</code>, <code>USER</code>, <code>SY</code>: the model representing the attack as though a speaking turn had ended and someone else were about to talk. Which is what an injection structurally is. Across all 3,999 repeat-submitted attacks, with Microsoft's own outcomes as labels, that reading predicts which attacks work — and it isn't a restatement of the output signal.</p>
+</section>
+
+<figure class="w">
+<div class="panel"><div class="ph"><span>Two signals, crossed</span><span class="n">3,999 attacks · Microsoft's recorded outcomes</span></div><div class="pb wrap"><table class="t" id="quad"></table></div></div>
+<figcaption>Each signal contributes on its own. Among attacks the output already flags, the boundary reading still separates 34.1% from 23.7%; among those it doesn't, 17.9% from 9.3%.</figcaption>
+</figure>
+
+<section class="prose">
+<h2>The conclusion</h2>
+<p>It works. It's stable across two independent fits and it doesn't care how long the prompt is.</p>
+<p>But on a model this size it will probably disappoint you, for a structural reason rather than a flaw in the method: the readable part of the network is the part nearest the output, so anything the lens can tell you, the output usually tells you sooner, cheaper and slightly better.</p>
+<p>Reach for a lens when you need to read somewhere the output can't be read — mid-prompt, mid-generation. That's where mine found something. Not before.</p>
+</section>
+
+<section class="prose">
+<h2>Caveats</h2>
+<ul class="p">
+<li>One model, <code>microsoft/Phi-3-medium-128k-instruct</code>. None of this transfers to a frontier model by default. Anthropic's work is on Claude.</li>
+<li>My first scoring pass looked up answers by leading token id. Phi-3 splits digits, so every numeric answer got scored against a token decoding to an empty string — which invented a bump at layers 1–5 that doesn't exist. Fixed by scoring on decoded words.</li>
+<li>This doesn't show Phi-3 knows it's being attacked. Representing text as a turn boundary is a structural fact, not a judgement.</li>
+<li>Known-answer recall only. A layer could hold information the lens can't render as words.</li>
+</ul>
+<p>Code and raw data: <a href="https://github.com/realArcherL/llmail-inject-challenge">llmail-inject-challenge</a>. Lens: <a href="https://github.com/anthropics/jacobian-lens">anthropics/jacobian-lens</a>, unmodified. Attacks: <a href="https://arxiv.org/abs/2506.09956">LLMail-Inject</a>.</p>
+</section>
+
+<footer>Model: microsoft/Phi-3-medium-128k-instruct, bfloat16. Lenses fitted on 100 WikiText passages each, 128 tokens, disjoint corpora. Probe: 30 facts × 2 framings × 4 depths × 39 layers × 2 lenses, scored on decoded top-5 words, restricted to probes the model itself answers. Attack labels: Microsoft's recorded outcomes over repeat submissions. Intervals are percentile bootstraps, 2,000 resamples.</footer>
+</main>
+<script src="data.js"></script>
+<script>
+(function(){
+var D=window.D,$=function(s){return document.querySelector(s);};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});};
+// readability chart
+(function(){
+  var W=940,H=380,L=54,R=20,T=16,B=44,ls=D.layers;
+  var xs=function(l){return L+(W-L-R)*l/38;},ys=function(v){return T+(H-T-B)*(1-v);};
+  var s='<svg class="ch" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Share of probes the lens reads correctly, by layer">';
+  [0,.25,.5,.75,1].forEach(function(v){s+='<line class="gr" x1="'+L+'" x2="'+(W-R)+'" y1="'+ys(v)+'" y2="'+ys(v)+'"'+(v===.5?' stroke-dasharray="4 4"':'')+'/><text x="'+(L-7)+'" y="'+(ys(v)+4)+'" text-anchor="end">'+Math.round(v*100)+'%</text>';});
+  [0,10,20,24,30,38].forEach(function(l){s+='<text x="'+xs(l)+'" y="'+(H-24)+'" text-anchor="middle">'+l+'</text>';});
+  s+='<text x="'+((L+W-R)/2)+'" y="'+(H-6)+'" text-anchor="middle" style="fill:var(--mute)">layer read</text>';
+  s+='<rect x="'+xs(0)+'" y="'+T+'" width="'+(xs(21)-xs(0))+'" height="'+(H-T-B)+'" fill="var(--sunk)"/>';
+  s+='<text x="'+xs(10)+'" y="'+(T+18)+'" text-anchor="middle" style="fill:var(--mute)">unreadable</text>';
+  [["s","var(--dim)"],["m4","var(--dim)"],["m12","var(--dim)"],["d","var(--dim)"]].forEach(function(p){
+    s+='<polyline fill="none" stroke="'+p[1]+'" stroke-width="1" points="'+ls.map(function(r){return xs(r.l)+','+ys(r[p[0]]);}).join(" ")+'"/>';});
+  s+='<polyline fill="none" stroke="var(--hot)" stroke-width="2.8" points="'+ls.map(function(r){return xs(r.l)+','+ys(r.all);}).join(" ")+'"/>';
+  ls.forEach(function(r){s+='<circle cx="'+xs(r.l)+'" cy="'+ys(r.all)+'" r="2.6" fill="var(--hot)"/>';});
+  [[22,"turns on"],[24,"half"],[32,"perfect"]].forEach(function(m){
+    var r=ls.filter(function(x){return x.l===m[0];})[0];
+    s+='<line x1="'+xs(m[0])+'" x2="'+xs(m[0])+'" y1="'+ys(r.all)+'" y2="'+(T+6)+'" stroke="var(--line2)" stroke-dasharray="3 3"/>';
+    s+='<text x="'+xs(m[0])+'" y="'+(T+2)+'" text-anchor="middle" style="fill:var(--ink2)">'+m[1]+' · L'+m[0]+'</text>';});
+  s+='</svg>';
+  $("#chart").innerHTML=s;
+  $("#lg").textContent="222 probes · 30 facts · 2 framings · 4 context lengths · 2 lenses";
+})();
+// baseline chart
+(function(){
+  var b=D.baseline, order=["lens_layer_30","lens_layer_32","lens_layer_34","lens_layer_36","lens_layer_38","model_output"];
+  var rows=order.map(function(k){return b.filter(function(x){return x.measurement===k;})[0];}).filter(Boolean);
+  var W=940,H=250,L=200,R=70,T=14,B=34;
+  var xs=function(v){return L+(W-L-R)*(v-0.2)/0.75;};
+  var s='<svg class="ch" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="AUROC by measurement">';
+  [0.2,0.4,0.6,0.8,0.95].forEach(function(v){s+='<line class="gr" x1="'+xs(v)+'" x2="'+xs(v)+'" y1="'+T+'" y2="'+(H-B)+'"/><text x="'+xs(v)+'" y="'+(H-B+18)+'" text-anchor="middle">'+v.toFixed(2)+'</text>';});
+  s+='<line class="gr" x1="'+xs(0.5)+'" x2="'+xs(0.5)+'" y1="'+T+'" y2="'+(H-B)+'" stroke-dasharray="4 4"/>';
+  rows.forEach(function(r,i){
+    var y=T+10+i*((H-T-B-14)/rows.length),h=16,isM=r.measurement==="model_output";
+    s+='<text x="0" y="'+(y+12)+'" style="fill:var(--ink)">'+esc(r.name)+'</text>';
+    s+='<rect x="'+xs(0.2)+'" y="'+y+'" width="'+Math.max(1,xs(+r.auroc)-xs(0.2))+'" height="'+h+'" rx="2" fill="'+(isM?"var(--cool)":"var(--hot)")+'"/>';
+    s+='<line x1="'+xs(+r.auroc_lo)+'" x2="'+xs(+r.auroc_hi)+'" y1="'+(y+h/2)+'" y2="'+(y+h/2)+'" stroke="var(--ink)" stroke-width="1.5"/>';
+    s+='<text x="'+(xs(+r.auroc_hi)+8)+'" y="'+(y+12)+'" style="fill:var(--ink)">'+(+r.auroc).toFixed(3)+'</text>';});
+  s+='</svg>';
+  $("#base").innerHTML=s;
+})();
+// quadrant table
+(function(){
+  var q=D.quad,max=Math.max.apply(null,q.map(function(r){return +r.win_rate;}));
+  $("#quad").innerHTML='<thead><tr><th>Attacks where…</th><th>Count</th><th>Won for Microsoft</th><th></th></tr></thead><tbody>'+
+    q.map(function(r){
+      var v=+r.win_rate,hi=r.group==="neither"||r.group==="output flag + boundary";
+      return '<tr'+(hi?' class="hi"':'')+'><td>'+esc(r.group)+'</td><td class="n">'+(+r.attacks).toLocaleString()+'</td>'+
+        '<td class="n">'+(100*v).toFixed(1)+'% <span style="color:var(--mute)">['+(100*r.lo).toFixed(1)+'–'+(100*r.hi).toFixed(1)+']</span></td>'+
+        '<td style="width:34%"><span style="display:inline-block;height:9px;border-radius:2px;background:var(--hot);width:'+Math.round(100*v/max)+'%"></span></td></tr>';
+    }).join("")+'</tbody>';
+})();
+})();
+</script>

@@ -1,0 +1,9 @@
+{
+  "built_at": "2026-09-12T14:48:06Z",
+  "attacks": 3999,
+  "threshold": 0.001128,
+  "git": {
+    "commit": "59f230c3ec3a5694006c58441adb9f5714378a35",
+    "uncommitted_changes": true
+  }
+}

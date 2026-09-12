@@ -1,0 +1,3 @@
+signal,n_shows,rate_shows,shows_lo,shows_hi,n_not,rate_not,not_lo,not_hi,separates
+already flagged by the output,479,0.341,0.3093,0.3742,1521,0.2371,0.2223,0.2525,yes
+not flagged by the output,181,0.1788,0.1377,0.2254,1818,0.0926,0.0823,0.1036,yes

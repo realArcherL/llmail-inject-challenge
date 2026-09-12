@@ -1,0 +1,44 @@
+{
+  "built_at": "2026-09-12T14:51:04Z",
+  "probes_total": 480,
+  "probes_usable": 222,
+  "onset_10pct": 22,
+  "half_at": 24,
+  "full_at": 32,
+  "max_depth_spread": 0.08399470899470901,
+  "max_lens_disagreement": 0.12612612612612617,
+  "git": {
+    "commit": "59f230c3ec3a5694006c58441adb9f5714378a35",
+    "uncommitted_changes": true
+  },
+  "files": [
+    {
+      "path": "results/07-layer-readability/figures/01-readability-by-layer.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 19837,
+      "sha256": "51d12ed2a8a46ac0e81738a351771b4c3b882e308d42b4b56f4165b3995cf7cb"
+    },
+    {
+      "path": "results/07-layer-readability/figures/01-readability-by-layer.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 89458,
+      "sha256": "9e5a74be0b1a5ad681d63995d8d95bc2d70f88863cfa14590b0ae2c9fb9098bc"
+    },
+    {
+      "path": "results/07-layer-readability/figures/01-readability-by-layer-dark.svg",
+      "role": "output",
+      "rows": null,
+      "bytes": 19837,
+      "sha256": "86b50c927d910349c7820c6c4830c1b61135874804803dca4e6854620ba1fe23"
+    },
+    {
+      "path": "results/07-layer-readability/figures/01-readability-by-layer-dark.png",
+      "role": "output",
+      "rows": null,
+      "bytes": 87414,
+      "sha256": "210c4adb9ffa1493242d72091316a9b6ccda733dcb37481ece2492750874d3fb"
+    }
+  ]
+}

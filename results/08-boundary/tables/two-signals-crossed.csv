@@ -1,0 +1,5 @@
+group,attacks,win_rate,lo,hi
+output flag + boundary,479,0.341,0.3092,0.3724
+output flag only,1521,0.2371,0.2218,0.253
+boundary only,181,0.1788,0.1365,0.2214
+neither,1818,0.0926,0.0826,0.1027
