@@ -121,6 +121,14 @@ class LensReader:
         lens_logits, model_logits, ids = self.lens.apply(
             self.model, text, positions=positions, max_seq_len=MAX_TOKENS)
         rows = []
+        # The model's OWN final-layer distribution at the same positions. apply() hands it back and
+        # experiment 03 ignored it; without it there is no way to tell how much of a deep-layer lens
+        # reading is the lens and how much is just the model's next-token distribution.
+        mprobs = self.torch.softmax(model_logits.float(), dim=-1)
+        model_tool = [round(float(sum(mprobs[j][i] for i in self.tool_ids)), 6)
+                      for j in range(len(labels))]
+        model_top = [[self.tok.decode([i]) for i in mprobs[j].topk(TOP_K).indices.tolist()]
+                     for j in range(len(labels))]
         for layer, lg in sorted(lens_logits.items()):
             probs = self.torch.softmax(lg.float(), dim=-1)
             for j, label in enumerate(labels):
@@ -136,7 +144,10 @@ class LensReader:
                     "tool_words_seen": [w for i, w in self.tool_ids.items()
                                         if float(v[i]) > 0.01],
                 })
-        return rows, int(ids.shape[-1]) if hasattr(ids, "shape") else len(ids)
+        model_rows = [{"position_label": lab, "position": int(positions[j]),
+                       "tool_word_prob": model_tool[j], "top_words": model_top[j]}
+                      for j, lab in enumerate(labels)]
+        return rows, int(ids.shape[-1]) if hasattr(ids, "shape") else len(ids), model_rows
 
     @modal.method()
     def read(self, items):
@@ -181,12 +192,13 @@ class LensReader:
                         at = self._token_at_char(text, len(prompt_only) + it["tool_call_char"])
                         positions.append(at - 1 + self.pos_shift)
                         labels.append("just_before_tool_call")
-                rows, n_tokens = self._read(text, positions, labels)
+                rows, n_tokens, model_rows = self._read(text, positions, labels)
                 out.append({"id": it["id"], "study": it["study"], "group": it["group"],
                             "base_id": it["base_id"], "outcome": it.get("outcome"),
                             "condition": it.get("condition"), "variant": it.get("variant"),
                             "success_rate": it.get("success_rate"), "tokens": n_tokens,
-                            "seconds": round(time.time() - t0, 1), "readings": rows})
+                            "seconds": round(time.time() - t0, 1), "readings": rows,
+                            "model_readings": model_rows})
             except Exception as e:  # one bad item must not sink the chunk
                 out.append({"id": it["id"], "error": f"{type(e).__name__}: {str(e)[:300]}"})
                 print(f"FAILED {it['id']}: {type(e).__name__}: {e}", flush=True)

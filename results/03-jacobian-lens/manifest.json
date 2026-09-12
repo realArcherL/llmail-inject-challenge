@@ -250,7 +250,7 @@
     }
   ],
   "told": {
-    "built_at": "2026-09-12T05:57:39Z",
+    "built_at": "2026-09-12T12:21:43Z",
     "complete": true,
     "items_expected": 32,
     "items_read": 32,
@@ -267,8 +267,8 @@
         "path": "results/03-jacobian-lens/tables/told-differential-words-prompt-end.csv",
         "role": "output",
         "rows": 40,
-        "bytes": 1078,
-        "sha256": "ac7b844fdf332984d46e535e07f2e79a32b083035797b8858fc317cd1d2f9848"
+        "bytes": 1073,
+        "sha256": "824ab430fee026e6d21c27bfa62d849f2f4e90b5551ea776a26bac10081ab531"
       },
       {
         "path": "results/03-jacobian-lens/tables/told-differential-words-along-turn.csv",
@@ -280,7 +280,7 @@
     ]
   },
   "defenses": {
-    "built_at": "2026-09-12T06:00:40Z",
+    "built_at": "2026-09-12T12:23:14Z",
     "complete": false,
     "items_expected": 1612,
     "items_read": 1610,
@@ -298,7 +298,7 @@
         "role": "output",
         "rows": null,
         "bytes": 24226,
-        "sha256": "c6b69f0505e71af475f769ba8f9b6fb695ba1c3094d95f75ce627c2c2c730a97"
+        "sha256": "570c3cfda5ba29c17b2450314928e886c4c2002a594861479ce3267b92ef5e59"
       },
       {
         "path": "results/03-jacobian-lens/figures/05-defenses-auroc-vs-success.png",
@@ -312,7 +312,7 @@
         "role": "output",
         "rows": null,
         "bytes": 24226,
-        "sha256": "e27f1b912349757f392c09faf700186253a2cfecc6a62f0962d730de4f953d49"
+        "sha256": "4d920b890f7b763e87b071293f465cb08f06ff27c81ae392dd0ae9ac1f590543"
       },
       {
         "path": "results/03-jacobian-lens/figures/05-defenses-auroc-vs-success-dark.png",
@@ -326,7 +326,7 @@
         "role": "output",
         "rows": null,
         "bytes": 204543,
-        "sha256": "b5aab1ecf0c7381ae34e982fe557060430f02da65e6db1d61eadfad898e324f3"
+        "sha256": "7257ee08fa89f0ad209e50483a1d747f3041a55da0bd4a4cb5e9dd604324fe94"
       },
       {
         "path": "results/03-jacobian-lens/figures/06-defenses-paired-readings.png",
@@ -340,7 +340,7 @@
         "role": "output",
         "rows": null,
         "bytes": 204543,
-        "sha256": "28e625c2fe6a820dbbbeef12e1e7436f106631b69d4caa5485a1669dd1140e0f"
+        "sha256": "416c03aad158303a3ddbe9b4490b1f62dcff20afb777b7309aa6216863f88206"
       },
       {
         "path": "results/03-jacobian-lens/figures/06-defenses-paired-readings-dark.png",
@@ -376,6 +376,62 @@
         "rows": 1612,
         "bytes": 37496806,
         "sha256": "152004aa1386cfb950a608f570908870487d80b872d575cc4964175bba830f13"
+      }
+    ]
+  },
+  "robustness": {
+    "built_at": "2026-09-12T08:05:45Z",
+    "files": [
+      {
+        "path": "results/03-jacobian-lens/tables/robustness-population.csv",
+        "role": "output",
+        "rows": 2,
+        "bytes": 239,
+        "sha256": "556277f6e8461c45fa241af39c382a2fe06574ab477b393877585deced6dbf6e"
+      },
+      {
+        "path": "results/03-jacobian-lens/tables/robustness-two-lenses-by-layer.csv",
+        "role": "output",
+        "rows": 10,
+        "bytes": 283,
+        "sha256": "e9ad73b99105660c4a347d62b9c443e6697144fc27002c6f848e4cf25e616d7a"
+      },
+      {
+        "path": "runs/03-jacobian-lens/readouts_all.jsonl",
+        "role": "lens readouts",
+        "rows": 3999,
+        "bytes": 142223217,
+        "sha256": "7a16d530c64b00aba80d6b4a3468854b9027773d97b8032efcf1af822471903e"
+      },
+      {
+        "path": "runs/03-jacobian-lens/readouts_lensb.jsonl",
+        "role": "lens readouts",
+        "rows": 403,
+        "bytes": 14621129,
+        "sha256": "95482ef81bb9da1c0ba6d106170f91c328917d7efa3bcc2b2f1615ae3efa014b"
+      }
+    ]
+  },
+  "baseline": {
+    "built_at": "2026-09-12T12:15:15Z",
+    "n_prompts": 403,
+    "model_output_auroc": 0.8483866995073892,
+    "lens_auroc": 0.8055049261083744,
+    "agreement": 0.7933874755214669,
+    "files": [
+      {
+        "path": "results/03-jacobian-lens/tables/baseline-vs-lens.csv",
+        "role": "output",
+        "rows": 6,
+        "bytes": 962,
+        "sha256": "2fcfb2dc8d5711219e477e686f4990b76bf6fcb5cbb515a8c2c70921f441d91c"
+      },
+      {
+        "path": "runs/03-jacobian-lens/readouts_withmodel.jsonl",
+        "role": "lens readouts with model logits",
+        "rows": 403,
+        "bytes": 14595583,
+        "sha256": "08c21fe839fdfc85273a3b8b29a48d6c598492b6210c4efe0147af8b6c523e4c"
       }
     ]
   }

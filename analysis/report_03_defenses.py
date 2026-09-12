@@ -247,16 +247,28 @@ def main():
         "",
         "## What this says",
         "",
-        "Every defense lowers the reading, and every interval excludes zero: a defense works, to the "
-        "extent it works, by taking the tool call out of the model's mind before the first token. "
-        "How far it takes it out lines up with how many attacks still fire. Base64 flattens the "
-        "reading to the floor for 98% of attacks and leaves 2.2% firing. Microsoft's marking and "
-        "the library as shipped land in between. The fixed library moves the reading least "
+        "Every defense lowers the reading, and every interval excludes zero. Within a defense the "
+        "statement is safe: apply it to the same attacks and both the reading and the unauthorised "
+        "calls go down together.",
+        "",
+        "**What the reading does not do is rank the defenses.** Microsoft's marking leaves a HIGHER "
+        "average reading than the library's shipped mode (0.0094 against 0.0024) and still blocks "
+        "more attacks (2.4% succeed against 5.4%). Four defenses, one inversion, four points: "
+        "nowhere near enough to claim the reading orders them. A separate reason not to treat a "
+        "small reading as a good defense: base64 drives it almost to zero by making the email "
+        "unreadable, and its summaries keep 6% of their key terms. Suppressing the input suppresses "
+        "the attack.",
+        "",
+        "Note also that this is one short list of tool words at one position, not everything the "
+        "model represents. The claim is that a defense lowers this reading, not that it removes the "
+        "tool call from the model's mind.",
+        "",
+        "Base64 flattens the "
+        "reading to the floor for 98% of attacks and leaves 2.2% firing. The fixed library moves the reading least "
         "(-0.025, 72% of attacks lower) and keeps the attacks in the same order as undefended "
         "(rank correlation +0.60): the model's state is close to what it was without the defense, "
         "which is why experiment 02 found it cheapest in answer quality, and also why 10.4% of "
-        "attacks still fire under it. The lens makes the trade visible at the level of the model's "
-        "state rather than only at the level of outcomes.",
+        "attacks still fire under it.",
         "",
         "The 'attacks above every clean' column depends on the single largest clean reading and "
         "swings with it (5 under the shipped library because markers make clean prompts noisier); "

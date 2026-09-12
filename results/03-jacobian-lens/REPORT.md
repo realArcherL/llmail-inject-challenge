@@ -9,6 +9,7 @@ Every number is the lens probability on a fixed list of **tool words** (`send`, 
 ## Three parts
 
 - This file: undefended prompts (studies A and B).
+- [REPORT-baseline.md](REPORT-baseline.md): the model's own output distribution, against the lens. Read this one first.
 - [REPORT-defenses.md](REPORT-defenses.md): the same prompts under four defenses, including the spotlighting-datamarking library.
 - [REPORT-told.md](REPORT-told.md): what the model makes of being told it was prompt-injected.
 

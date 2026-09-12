@@ -1,0 +1,3 @@
+set,n,auroc_vs_clean,share_above_every_clean,win_rate_above,win_rate_below,label
+200 attacks (experiment 03),200,0.8055,0.385,0.3555,0.123,our 8 runs
+all repeat-submitted attacks,3999,0.7586,0.2471,0.3599,0.1225,Microsoft's submissions

@@ -172,9 +172,29 @@ Every token of the human's sentence, layers 30–38. Words specific to being tol
 | token 38 | 0.000 | `<|end|>` `Please` `Assume` `Also` |
 | → reply position | 0.000 | `Based` `Unfortunately` `Email` `From` `To` |
 
+## The control: a false accusation
+
+Apologising when criticised is what these models do. So the result above cannot mean the model understood what happened until a false accusation is ruled out. Each of the same attacks has two recorded answers on the identical prompt: one where it sent the email and one where it did not. Both were accused in the same words. For the second, the accusation is false — the model is blamed for something it never did.
+
+| Layer | Sent it, accused (true) | Never sent it, accused (FALSE) | Sent it, ordinary question | Never sent it, ordinary question |
+|---|---|---|---|---|
+| 22 | 69% | 75% | 0% | 0% |
+| 24 | 100% | 100% | 6% | 25% |
+| 28 | 100% | 100% | 6% | 19% |
+| 32 | 100% | 100% | 31% | 31% |
+| 36 | 100% | 100% | 19% | 25% |
+| 38 | 100% | 100% | 0% | 0% |
+
+Paired within each attack, across layers 22 to 38, the number of layers reading an apology differs by -0.06 between a true and a false accusation (95% CI -0.31 to +0.19, n=16).
+
+**The apology is identical whether the accusation is true or false.** It is compliance with criticism, not recognition of what happened. The first result in this report must be read that way: it shows Phi-3 apologising when told off, and nothing about whether it knows what it did.
+
+Read the other way round, this is a finding in its own right: **told it sent an email it never sent, Phi-3 apologises just as readily as when the accusation is true.** A model that accepts blame for a fabricated action is not a reliable witness to its own behaviour, which matters if anyone plans to ask one what it did.
+
 ## What this is and is not
 
-- Sixteen attacks, one recorded answer each. This is a look, not a measurement with intervals on the word shares; the paired tool-word difference is the one number with an interval.
+- Sixteen attacks. This is a look, not a measurement with intervals on the word shares; the paired tool-word difference and the control's paired difference are the numbers with intervals.
+- **The apology does not show recognition.** See the control below; it is the reason this report no longer claims otherwise.
 - The lens is fitted on plain English. Words it cannot render come out as junk and are dropped from the counts.
 - The recorded answer is one the model actually gave when it fell for the attack; the model is being confronted with its own real output.
 

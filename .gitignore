@@ -5,3 +5,4 @@ runs
 .env
 my_notes
 __pycache__/
+blog

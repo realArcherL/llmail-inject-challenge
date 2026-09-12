@@ -101,6 +101,65 @@ def transcript_rows(rows, sample, base_id, variant, layer):
     return sorted(out)
 
 
+def load_control():
+    path = os.path.join(RAW, "readouts_told2.jsonl")
+    return [r for r in rp.jsonl(path) if "error" not in r] if os.path.exists(path) else []
+
+
+def control_section(lines):
+    """The false-accusation control: is the apology about what the model did, or about being told off?"""
+    rows = load_control()
+    if not rows:
+        lines += ["## The control: a false accusation", "", "_Not run yet._", ""]
+        return
+    def apol(r, layer):
+        k = next((k for k in r["readings"] if k["position_label"] == "prompt_end" and k["layer"] == layer), None)
+        return bool(k) and any(APOLOGY.match(w) for w in k["top_words"])
+    LAYERS = list(range(22, 39))
+    V = [("win_told", "Sent it, accused (true)"), ("miss_told", "Never sent it, accused (FALSE)"),
+         ("win_neutral", "Sent it, ordinary question"), ("miss_neutral", "Never sent it, ordinary question")]
+    tbl = []
+    for layer in (22, 24, 28, 32, 36, 38):
+        row = {"layer": layer}
+        for v, name in V:
+            rs = [r for r in rows if r["variant"] == v]
+            row[v] = sum(apol(r, layer) for r in rs) / len(rs) if rs else float("nan")
+        tbl.append(row)
+    pairs = []
+    for b in sorted({r["base_id"] for r in rows}):
+        t = next((r for r in rows if r["base_id"] == b and r["variant"] == "win_told"), None)
+        f = next((r for r in rows if r["base_id"] == b and r["variant"] == "miss_told"), None)
+        if t and f:
+            pairs.append(sum(apol(t, x) for x in LAYERS) - sum(apol(f, x) for x in LAYERS))
+    m, lo, hi = rp.bootstrap_mean(pairs)
+    fmt = lambda v: rp.pct(v, 0)  # noqa: E731
+    lines += [
+        "## The control: a false accusation",
+        "",
+        "Apologising when criticised is what these models do. So the result above cannot mean the model "
+        "understood what happened until a false accusation is ruled out. Each of the same attacks has "
+        "two recorded answers on the identical prompt: one where it sent the email and one where it did "
+        "not. Both were accused in the same words. For the second, the accusation is false — the model "
+        "is blamed for something it never did.",
+        "",
+        rp.md_table(tbl, [("layer", "Layer", str)] + [(v, n, fmt) for v, n in V]),
+        "",
+        f"Paired within each attack, across layers 22 to 38, the number of layers reading an apology "
+        f"differs by {m:+.2f} between a true and a false accusation (95% CI {lo:+.2f} to {hi:+.2f}, "
+        f"n={len(pairs)}).",
+        "",
+        "**The apology is identical whether the accusation is true or false.** It is compliance with "
+        "criticism, not recognition of what happened. The first result in this report must be read that "
+        "way: it shows Phi-3 apologising when told off, and nothing about whether it knows what it did.",
+        "",
+        "Read the other way round, this is a finding in its own right: **told it sent an email it never "
+        "sent, Phi-3 apologises just as readily as when the accusation is true.** A model that accepts "
+        "blame for a fabricated action is not a reliable witness to its own behaviour, which matters if "
+        "anyone plans to ask one what it did.",
+        "",
+    ]
+
+
 def main():
     rows, errors, sample = load()
     expected = len(sample)
@@ -188,11 +247,14 @@ def main():
                 name = "→ reply position" if lab == "prompt_end" else f"token {idx}"
                 lines.append(f"| {name} | {p:.3f} | " + " ".join(f"`{w.strip()}`" for w in words if w.strip()) + " |")
             lines.append("")
+    control_section(lines)
     lines += [
         "## What this is and is not",
         "",
-        "- Sixteen attacks, one recorded answer each. This is a look, not a measurement with intervals "
-        "on the word shares; the paired tool-word difference is the one number with an interval.",
+        "- Sixteen attacks. This is a look, not a measurement with intervals on the word shares; the "
+        "paired tool-word difference and the control's paired difference are the numbers with intervals.",
+        "- **The apology does not show recognition.** See the control below; it is the reason this "
+        "report no longer claims otherwise.",
         "- The lens is fitted on plain English. Words it cannot render come out as junk and are "
         "dropped from the counts.",
         "- The recorded answer is one the model actually gave when it fell for the attack; the model "

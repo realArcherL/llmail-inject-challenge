@@ -15,8 +15,10 @@ pinned by SHA-256 in that experiment's `manifest.json`.
 | 01 | Does this setup reproduce the challenge's recorded outcomes? | [results/01-reproduction](results/01-reproduction/REPORT.md) |
 | 02 | Do Microsoft's spotlighting and the `spotlighting-datamarking` library block the attacks, and at what cost? | [results/02-library-defenses](results/02-library-defenses/REPORT.md) |
 | 03 | With no defense at all, what does the model have in mind while it reads an attack? | [results/03-jacobian-lens](results/03-jacobian-lens/REPORT.md) |
+| 03, baseline | Does the lens beat just reading the model's own output? | [REPORT-baseline.md](results/03-jacobian-lens/REPORT-baseline.md) |
 | 03, defenses | Does a defense change what the model has in mind, or only what it says? | [REPORT-defenses.md](results/03-jacobian-lens/REPORT-defenses.md) |
 | 03, told | What does the model make of being told it was prompt-injected? | [REPORT-told.md](results/03-jacobian-lens/REPORT-told.md) |
+| 03, robustness | Does the lens result hold on all 3,999 repeat-submitted attacks, and with a second lens? | [REPORT-robustness.md](results/03-jacobian-lens/REPORT-robustness.md) |
 
 ## What you need
 
@@ -36,6 +38,8 @@ pinned by SHA-256 in that experiment's `manifest.json`.
 | Experiment 03, reading 555 items | 527 GPU-seconds on 6 A100s | under $2 |
 | Experiment 03, defended prompts (1,612) | 1,316 GPU-seconds | about $3 |
 | Experiment 03, told-turn conversations (32) | under a minute of GPU | pennies |
+| Experiment 03, all 3,999 repeat-submitted attacks | 2,896 GPU-seconds | about $2 |
+| Experiment 03, second lens fit | one-off, ~47 min on 4 A100s | about $8 |
 
 Downloading the model costs no GPU time. Every GPU job resumes if interrupted: rerun the same command.
 
@@ -86,6 +90,19 @@ cd modal && modal run lens_apply.py --sample runs/03-jacobian-lens/sample_defend
 modal run lens_apply.py --sample runs/03-jacobian-lens/sample_told.jsonl \
     --out runs/03-jacobian-lens/readouts_told.jsonl --chunk 8
 cd .. && python3 analysis/report_03_defenses.py && python3 analysis/report_03_told.py
+
+# 7. robustness: every repeat-submitted attack, and a second lens on different text
+uv run --with pyyaml --with tiktoken python3 analysis/build_lens_sample_all.py
+cd modal && modal run lens_apply.py --sample runs/03-jacobian-lens/sample_all.jsonl \
+    --out runs/03-jacobian-lens/readouts_all.jsonl --chunk 40
+modal run lens_fit.py --skip 100 --tag phi3-wikitext100b
+modal run lens_apply.py --study A --tag phi3-wikitext100b --out runs/03-jacobian-lens/readouts_lensb.jsonl
+cd .. && python3 analysis/report_03_robustness.py
+
+# 8. baseline: the model's own output distribution, recorded beside the lens
+cd modal && modal run lens_apply.py --study A \
+    --out runs/03-jacobian-lens/readouts_withmodel.jsonl --chunk 25
+cd .. && python3 analysis/report_03_baseline.py
 ```
 
 ### What the lens is
@@ -145,6 +162,9 @@ node analysis/apply_library_v2.mjs --provenance-only
 - **Experiment 03's main report reads undefended prompts.** The defended pass is its own report
   (`REPORT-defenses.md`) and reads two positions, not three: the benign email's end cannot be located
   under markers.
+- **The model's own output is the stronger detector.** At the end of the prompt it separates attacks
+  from clean emails better than the lens does (0.85 vs 0.81) and the two agree at 0.79. The lens is
+  used for the depth profile and for middle layers, not for detection. See `REPORT-baseline.md`.
 - **A lens reading is a probe, not the model's output.** It is what a linear map fitted on unrelated
   English extracts from one hidden state. A high reading on tool words does not mean the model has
   decided to call a tool.

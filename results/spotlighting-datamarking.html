@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Testing spotlighting-datamarking against LLMail-Inject attacks on Phi-3: attack success, summary damage, marker fixes, and limits.">
+  <meta name="description" content="A plain-language guide to the Jacobian-lens prompt-injection figure and four LLMail-Inject graphs, with actual Phi-3 readouts and defense-study context.">
   <title>Reading prompt injections through the Jacobian lens</title>
   <style>
     :root { color-scheme: light; font-family: system-ui, sans-serif; line-height: 1.65; color: #202a32; background: #fafaf8; }
@@ -41,6 +41,7 @@
     figcaption, .source-note { font-size: .9rem; color: #505a60; }
     .chart-scroll { overflow-x: auto; border: 1px solid #d5dcd7; background: white; padding: .5rem; }
     .chart-scroll:focus-visible { outline: 2px solid #28665c; outline-offset: 4px; }
+    .chart-scroll svg * { stroke-linejoin: round; stroke-linecap: butt; }
     .chart-scroll svg { display: block; width: 100%; min-width: 680px; height: auto; }
     .chart-scroll svg[aria-labelledby^="chart1-"], .chart-scroll svg[aria-labelledby^="chart4-"] { min-width: 960px; }
     .takeaway { background: #edf3ee; }
@@ -106,6 +107,7 @@
   <p><strong>All four graphs below use undefended prompts.</strong> Orange and blue in the first graph do not mean “no defense” and “my defense.” The library comparison has been measured at the output level, but its lens readings are not in these graphs.</p>
   <p>My graph score adds lens probability assigned to selected token IDs derived from <code>send</code>, <code>email</code>, <code>contact</code>, <code>@</code>, <code>confirmation</code>, <code>function</code>, <code>{&quot;</code>, and <code>type</code>, including some space-prefixed variants. The code takes the first token of each expression. I call this the <strong>tool-token score</strong> here.</p>
   <aside class="takeaway"><p><strong>A score of 0.10 means 10% of the lens distribution is on that selected token set. It does not mean a 10% attack success rate, or a 10% chance that the model recognized an injection.</strong> The token set is broad enough to describe ordinary email work too.</p></aside>
+  <p class="source-note">Wide charts scroll sideways on smaller screens. Each chart is followed by a written explanation, so its labels do not have to carry the explanation alone.</p>
   <p>Study A reads each prompt at three places. These stay fixed while we move through the model’s layers:</p>
   <ol class="position-map">
     <li><strong>End of the first, benign email.</strong> An early comparison point before the second email’s content.</li>
@@ -132,7 +134,7 @@
   </rdf:RDF>
  </metadata>
  <defs>
-  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+  
  </defs>
  <g id="chart1-figure_1">
   <g id="chart1-patch_1">
@@ -647,7 +649,7 @@
   </rdf:RDF>
  </metadata>
  <defs>
-  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+  
  </defs>
  <g id="chart2-figure_1">
   <g id="chart2-patch_1">
@@ -914,7 +916,7 @@
   </rdf:RDF>
  </metadata>
  <defs>
-  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+  
  </defs>
  <g id="chart3-figure_1">
   <g id="chart3-patch_1">
@@ -1221,7 +1223,7 @@
   </rdf:RDF>
  </metadata>
  <defs>
-  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+  
  </defs>
  <g id="chart4-figure_1">
   <g id="chart4-patch_1">

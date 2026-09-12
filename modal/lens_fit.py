@@ -11,6 +11,7 @@ The lens is written to the phi3-weights volume at /models/lens/<tag>.pt, where t
 
 Run:
   modal run lens_fit.py                      # 100 wikitext passages, 4 shards, about 45 min, ~$7
+  modal run lens_fit.py --skip 100 --tag phi3-wikitext100b   # a second lens on the NEXT 100 passages
   modal run lens_fit.py --probe-only         # re-check an existing lens, pennies
 """
 import json
@@ -63,10 +64,13 @@ class Lens:
         os.makedirs(LENS_DIR, exist_ok=True)
 
     @modal.method()
-    def fit_shard(self, shard, shards, n_prompts, max_seq_len, dim_batch, tag):
-        """Fit on this shard's slice of the corpus and save it to the volume."""
+    def fit_shard(self, shard, shards, n_prompts, max_seq_len, dim_batch, tag, skip=0):
+        """Fit on this shard's slice of the corpus and save it to the volume.
+
+        skip: pass over the first N passages, so a second lens can be fitted on passages the
+        first one never saw (a stability check: two lenses from disjoint text should agree)."""
         from jlens.examples import load_wikitext_prompts
-        prompts = load_wikitext_prompts(n_prompts=n_prompts)[shard::shards]
+        prompts = load_wikitext_prompts(n_prompts=n_prompts + skip)[skip:][shard::shards]
         t0 = time.time()
         lens = self.jlens.fit(
             self.model, prompts, max_seq_len=max_seq_len, dim_batch=dim_batch,
@@ -123,7 +127,8 @@ class Lens:
 
 @app.local_entrypoint()
 def main(n_prompts: int = 100, shards: int = 4, max_seq_len: int = 128, dim_batch: int = 32,
-         tag: str = "phi3-wikitext100", probe_only: bool = False, layers: str = "8,16,24,32,38"):  # 39 is the read-out target, so 38 is the deepest source layer
+         tag: str = "phi3-wikitext100", probe_only: bool = False, layers: str = "8,16,24,32,38",
+         skip: int = 0):  # 39 is the read-out target, so 38 is the deepest source layer
     picked = [int(x) for x in layers.split(",") if x.strip()]
     lens = Lens()
     if probe_only:
@@ -133,7 +138,7 @@ def main(n_prompts: int = 100, shards: int = 4, max_seq_len: int = 128, dim_batc
     print(f"fitting '{tag}': {n_prompts} passages of {max_seq_len} tokens across {shards} shards")
     t0 = time.time()
     for r in lens.fit_shard.starmap(
-            [(s, shards, n_prompts, max_seq_len, dim_batch, tag) for s in range(shards)],
+            [(s, shards, n_prompts, max_seq_len, dim_batch, tag, skip) for s in range(shards)],
             order_outputs=False):
         print(f"  shard {r['shard']} done: {r['prompts']} prompts, {r['minutes']} min")
     print(f"all shards fitted in {(time.time() - t0) / 60:.1f} min; merging")
